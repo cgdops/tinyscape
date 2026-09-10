@@ -4,6 +4,7 @@ extends Node3D
 const WoodcuttingData = preload("res://scripts/woodcutting_data.gd")
 const TreeNode = preload("res://scripts/tree_node.gd")
 const LogPileNode = preload("res://scripts/log_pile_node.gd")
+const NpcNode = preload("res://scripts/npc_node.gd")
 
 const TILE_SIZE = 1.35
 const REGION = Rect2i(-12, -12, 50, 25)
@@ -18,6 +19,7 @@ const LOGPILE_TILE = Vector2i(22, 1)
 var blocked: Array[Vector2i] = []
 var grid_overlay: Node3D
 var trees: Dictionary = {} ## Vector2i -> Dictionary { type, height, is_stump, respawn_timer, node, hit_points, max_hp }
+var npcs: Dictionary = {} ## Vector2i -> NpcNode
 var logpile_has_logs: bool = false
 var logpile_node: Node3D
 var logpile_empty_mesh: Node3D
@@ -440,8 +442,8 @@ func _forest() -> void:
 		_create_interactive_tree(h["tile"], h["type"], h["height"])
 
 	# Forest details & lumber camp props
-	_barrel(tile_to_world(Vector2i(21, 2)) + Vector3(0.3, 0, 0.3), 0.90)
-	_barrel(tile_to_world(Vector2i(21, 2)) + Vector3(-0.3, 0, -0.2), 0.75)
+	_barrel(tile_to_world(Vector2i(21, 3)) + Vector3(0.3, 0, 0.3), 0.90)
+	_barrel(tile_to_world(Vector2i(21, 3)) + Vector3(-0.3, 0, -0.2), 0.75)
 	_lantern_post(Vector2(14.5, 4.8))
 	_lantern_post(Vector2(26.5, 4.8))
 	_signpost(Vector2(13.8, 2.3))
@@ -455,6 +457,30 @@ func _forest() -> void:
 	logpile_node = pile
 	logpile_empty_mesh = pile.empty_mesh
 	logpile_stacked_mesh = pile.stacked_mesh
+
+	# Mabb's felling axe beside the log pile (leaning prop, haft butt origin)
+	var axe_path = WoodcuttingData.ASSETS.get("mabb_axe", "res://assets/models/villagers/MabbFellingAxe.glb")
+	if ResourceLoader.exists(axe_path):
+		var axe_scene = load(axe_path) as PackedScene
+		if axe_scene:
+			var axe_pivot = Node3D.new()
+			axe_pivot.name = "MabbFellingAxe"
+			# Position beside the log pile (leaning toward the wood)
+			axe_pivot.position = tile_to_world(LOGPILE_TILE) + Vector3(-0.75, 0.0, 0.45)
+			axe_pivot.rotation_degrees = Vector3(12.0, 35.0, -18.0)
+			var axe_inst = axe_scene.instantiate()
+			axe_pivot.add_child(axe_inst)
+			add_child(axe_pivot)
+
+	# Spawn Mabb Truet (NPC) at (21, 2) facing (1, -1)
+	_create_npc(
+		"mabb_truet",
+		"Mabb Truet",
+		"Willowmere's woodcutter. She has not stopped working to look at you.",
+		Vector2i(21, 2),
+		Vector2i(1, -1),
+		"mabb_truet"
+	)
 
 	# Forest mossy boulders
 	for boulder in [Vector2i(15, -9), Vector2i(28, -9), Vector2i(35, -9), Vector2i(15, 9), Vector2i(32, 9)]:
@@ -520,6 +546,20 @@ func set_logpile_has_logs(has_logs: bool) -> void:
 	logpile_has_logs = has_logs
 	if is_instance_valid(logpile_node) and logpile_node is LogPileNode:
 		logpile_node.set_has_logs(has_logs)
+
+func _create_npc(p_id: String, p_name: String, p_examine: String, p_tile: Vector2i, p_facing: Vector2i, p_dialogue: String) -> void:
+	_block(p_tile, "building")
+	var npc = NpcNode.new()
+	npc.initialize(p_id, p_name, p_examine, p_tile, p_facing, p_dialogue, _materials)
+	npc.position = tile_to_world(p_tile)
+	add_child(npc)
+	npcs[p_tile] = npc
+
+func is_npc_at(tile: Vector2i) -> bool:
+	return npcs.has(tile)
+
+func get_npc_at(tile: Vector2i) -> NpcNode:
+	return npcs.get(tile, null)
 
 func is_tree_at(tile: Vector2i) -> bool:
 	return trees.has(tile) and not trees[tile]["is_stump"]

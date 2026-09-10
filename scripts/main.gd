@@ -5,12 +5,18 @@ const Navigation = preload("res://scripts/navigation.gd")
 const Player = preload("res://scripts/player.gd")
 const GameCamera = preload("res://scripts/camera.gd")
 const HUD = preload("res://scripts/hud.gd")
+const GameState = preload("res://scripts/game_state.gd")
+const DialogueRunner = preload("res://scripts/dialogue_runner.gd")
+const QuestData = preload("res://scripts/quest_data.gd")
+const NpcNode = preload("res://scripts/npc_node.gd")
 
 var world: Node3D
 var navigation: RefCounted
 var player: Node3D
 var camera: Camera3D
 var hud: CanvasLayer
+var game_state: RefCounted
+var dialogue_runner: RefCounted
 var grid_visible := false
 var hovered_tile := Vector2i(999, 999)
 var _hover_marker: MeshInstance3D
@@ -22,6 +28,7 @@ var _time := 0.0
 
 func _ready() -> void:
 	_setup_light()
+	game_state = GameState.new()
 	world = World.new()
 	world.name = "Willowmere"
 	add_child(world)
@@ -32,6 +39,25 @@ func _ready() -> void:
 	player.name = "Wanderer"
 	add_child(player)
 	player.initialize(world, world.SPAWN)
+	dialogue_runner = DialogueRunner.new()
+	dialogue_runner.initialize(game_state, player)
+	dialogue_runner.dialogue_message_emitted.connect(func(msg: String): hud.show_message(msg, 4.0))
+	game_state.quest_state_changed.connect(func(q_id: String, new_state: String, _old: String):
+		var q_info = QuestData.get_quest_info(q_id)
+		var q_title = q_info.get("display_name", q_id)
+		if new_state == "active":
+			hud.show_message("Quest started: %s" % q_title, 4.0)
+		elif new_state == "complete":
+			hud.show_message("Quest complete: %s" % q_title, 4.0)
+	)
+	player.woodcut_progress.connect(func(_logs: int, _xp: int, _lvl: int, _msg: String):
+		if not game_state.get_flag("chopped_a_tree"):
+			game_state.set_flag("chopped_a_tree", true)
+	)
+	world.tree_state_changed.connect(func(_t: Vector2i, is_stump: bool):
+		if is_stump and not game_state.get_flag("saw_offering"):
+			game_state.set_flag("saw_offering", true)
+	)
 	camera = GameCamera.new()
 	camera.name = "AdventureCamera"
 	add_child(camera)
@@ -39,7 +65,7 @@ func _ready() -> void:
 	_setup_markers()
 	hud = HUD.new()
 	add_child(hud)
-	hud.initialize(world, player, camera)
+	hud.initialize(world, player, camera, game_state, dialogue_runner)
 	hud.grid_toggled.connect(toggle_grid)
 	hud.recenter_requested.connect(camera.reset_view)
 	hud.inspect_requested.connect(camera.toggle_character_view)
@@ -118,6 +144,8 @@ func _setup_markers() -> void:
 	add_child(_route)
 
 func tile_under_cursor(screen_position: Vector2) -> Vector2i:
+	if not is_instance_valid(camera):
+		return Vector2i(999, 999)
 	var origin := camera.project_ray_origin(screen_position)
 	var direction := camera.project_ray_normal(screen_position)
 	var intersection = Plane(Vector3.UP, 0.0).intersects_ray(origin, direction)
@@ -147,7 +175,8 @@ func _update_route() -> void:
 	for index in path.size():
 		_route.multimesh.set_instance_transform(index, Transform3D(Basis.IDENTITY, _marker_position(path[index])))
 
-var _pending_chop_tree: Vector2i = Vector2i(999, 999)
+var _pending_action: Dictionary = {} # { "kind": String, "tile": Vector2i }
+var _active_npc_tile: Vector2i = Vector2i(999, 999)
 
 func toggle_grid() -> void:
 	grid_visible = not grid_visible
@@ -155,11 +184,13 @@ func toggle_grid() -> void:
 	hud.grid_button.text = "G   Grid on" if grid_visible else "G   Tile grid"
 
 func _unhandled_input(event: InputEvent) -> void:
+	if hud.is_dialogue_open():
+		return
 	if event is InputEventMouseButton and event.pressed:
 		hud.hide_context_menu()
 		var clicked_tile = tile_under_cursor(event.position)
 		if event.button_index == MOUSE_BUTTON_LEFT:
-			_pending_chop_tree = Vector2i(999, 999)
+			_cancel_pending_interaction()
 			player.stop_chopping()
 			travel_to(clicked_tile)
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
@@ -167,6 +198,24 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _handle_right_click(screen_pos: Vector2, tile: Vector2i) -> void:
 	if not world.REGION.has_point(tile):
+		return
+	if world.is_npc_at(tile):
+		var npc = world.get_npc_at(tile)
+		var options: Array[Dictionary] = [
+			{
+				"text": "Talk-to " + npc.display_name,
+				"callback": func(): _start_talk_action(tile)
+			},
+			{
+				"text": "Examine",
+				"callback": func(): hud.show_message(npc.examine, 4.0)
+			},
+			{
+				"text": "Cancel",
+				"callback": func(): pass
+			}
+		]
+		hud.show_context_menu(screen_pos, options)
 		return
 	if tile == world.LOGPILE_TILE:
 		var options: Array[Dictionary] = [
@@ -235,62 +284,107 @@ func _start_woodcut_action(tree_tile: Vector2i) -> void:
 		hud.show_message(check.reason)
 		return
 
-	# If already adjacent, immediately start chopping
 	var diff = tree_tile - player.motion.current_tile
 	if absi(diff.x) <= 1 and absi(diff.y) <= 1 and not (diff.x == 0 and diff.y == 0):
-		_pending_chop_tree = Vector2i(999, 999)
+		_pending_action.clear()
 		player.start_chopping(tree_tile)
 		hud.show_message("You swing your axe at the tree...")
 		return
 
-	# Find the best adjacent walkable tile to approach the tree
+	var best_tile = _find_adjacent_walkable(tree_tile)
+	if best_tile != Vector2i(999, 999):
+		_pending_action = { "kind": "chop", "tile": tree_tile }
+		travel_to(best_tile)
+		hud.show_message("Walking to tree...")
+	else:
+		hud.show_message("I can't reach that tree.")
+
+func _start_talk_action(npc_tile: Vector2i) -> void:
+	if not world.is_npc_at(npc_tile):
+		return
+	var npc = world.get_npc_at(npc_tile)
+	var diff = npc_tile - player.motion.current_tile
+	if absi(diff.x) <= 1 and absi(diff.y) <= 1 and not (diff.x == 0 and diff.y == 0):
+		_pending_action.clear()
+		_open_dialogue_with_npc(npc)
+		return
+
+	var best_tile = _find_adjacent_walkable(npc_tile)
+	if best_tile != Vector2i(999, 999):
+		_pending_action = { "kind": "talk", "tile": npc_tile }
+		travel_to(best_tile)
+		hud.show_message("Walking to %s..." % npc.display_name)
+	else:
+		hud.show_message("I can't reach %s." % npc.display_name)
+
+func _find_adjacent_walkable(target_tile: Vector2i) -> Vector2i:
 	var best_tile := Vector2i(999, 999)
 	var shortest_path_len := 999999
 	for dx in [-1, 0, 1]:
 		for dz in [-1, 0, 1]:
 			if dx == 0 and dz == 0:
 				continue
-			var candidate = tree_tile + Vector2i(dx, dz)
+			var candidate = target_tile + Vector2i(dx, dz)
 			if navigation.is_walkable(candidate):
 				var test_path = navigation.find_path(player.motion.current_tile, candidate)
 				if not test_path.is_empty() or candidate == player.motion.current_tile:
 					if test_path.size() < shortest_path_len:
 						shortest_path_len = test_path.size()
 						best_tile = candidate
+	return best_tile
 
-	if best_tile != Vector2i(999, 999):
-		_pending_chop_tree = tree_tile
-		travel_to(best_tile)
-		hud.show_message("Walking to tree...")
-	else:
-		hud.show_message("I can't reach that tree.")
+func _open_dialogue_with_npc(npc: NpcNode) -> void:
+	player.stop_chopping()
+	# Face each other
+	var player_world_pos = world.tile_to_world(player.motion.current_tile)
+	var npc_world_pos = world.tile_to_world(npc.home_tile)
+	npc.turn_to_face(player_world_pos)
+	player.model.rotation.y = atan2(npc_world_pos.x - player_world_pos.x, npc_world_pos.z - player_world_pos.z)
+
+	_active_npc_tile = npc.home_tile
+	hud.open_dialogue(npc.dialogue_file, npc.display_name)
+	if is_instance_valid(hud.dialogue_box):
+		hud.dialogue_box.dialogue_finished.connect(func():
+			if world.is_npc_at(_active_npc_tile):
+				world.get_npc_at(_active_npc_tile).reset_facing()
+		, CONNECT_ONE_SHOT)
+
+func _cancel_pending_interaction() -> void:
+	_pending_action.clear()
 
 func _process(delta: float) -> void:
 	if player == null or player.motion == null:
 		return
 	_time += delta
+	var camera_orbiting: bool = camera.orbiting if is_instance_valid(camera) else false
+	var dialogue_active: bool = hud.is_dialogue_open() if is_instance_valid(hud) else false
 	hovered_tile = tile_under_cursor(get_viewport().get_mouse_position())
-	_hover_marker.visible = world.REGION.has_point(hovered_tile) and not camera.orbiting
+	_hover_marker.visible = world.REGION.has_point(hovered_tile) and not camera_orbiting and not dialogue_active
 	if _hover_marker.visible:
 		_hover_marker.position = _marker_position(hovered_tile)
-		if world.is_tree_at(hovered_tile):
+		if world.is_npc_at(hovered_tile):
+			_hover_material.albedo_color = Color(0.95, 0.82, 0.35, 0.45)
+		elif world.is_tree_at(hovered_tile):
 			_hover_material.albedo_color = Color(0.25, 0.78, 0.40, 0.38)
 		else:
 			_hover_material.albedo_color = Color(0.97, 0.9, 0.64, 0.28) if navigation.is_walkable(hovered_tile) else Color(0.86, 0.32, 0.23, 0.40)
-	_destination_marker.visible = player.motion.moving
+	_destination_marker.visible = player.motion.moving and not hud.is_dialogue_open()
 	_destination_marker.scale = Vector3.ONE * (1.0 + sin(_time * 4.0) * 0.10)
 
-	# Check if player arrived at tree destination
-	if not player.motion.moving and _pending_chop_tree != Vector2i(999, 999):
-		var diff = _pending_chop_tree - player.motion.current_tile
+	# Check if player arrived at pending action destination
+	if not player.motion.moving and not _pending_action.is_empty():
+		var target_tile: Vector2i = _pending_action.get("tile", Vector2i(999, 999))
+		var action_kind: String = _pending_action.get("kind", "")
+		var diff = target_tile - player.motion.current_tile
 		if absi(diff.x) <= 1 and absi(diff.y) <= 1:
-			var target = _pending_chop_tree
-			_pending_chop_tree = Vector2i(999, 999)
-			if world.is_tree_at(target):
-				player.start_chopping(target)
+			_pending_action.clear()
+			if action_kind == "chop" and world.is_tree_at(target_tile):
+				player.start_chopping(target_tile)
 				hud.show_message("You swing your axe at the tree...")
+			elif action_kind == "talk" and world.is_npc_at(target_tile):
+				_open_dialogue_with_npc(world.get_npc_at(target_tile))
 		else:
-			_pending_chop_tree = Vector2i(999, 999)
+			_pending_action.clear()
 
 	_ui_timer += delta
 	if _ui_timer >= 0.10:

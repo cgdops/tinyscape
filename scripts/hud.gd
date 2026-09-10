@@ -8,6 +8,9 @@ signal destination_requested(tile: Vector2i)
 
 const Minimap = preload("res://scripts/minimap.gd")
 const WoodcuttingData = preload("res://scripts/woodcutting_data.gd")
+const DialogueBox = preload("res://scripts/dialogue_box.gd")
+const QuestJournal = preload("res://scripts/quest_journal.gd")
+
 const INK := Color("25382f")
 const GOLD := Color("dbc28b")
 const TEXT := Color("eee8d9")
@@ -19,6 +22,7 @@ var travel_label: Label
 var woodcut_label: Label
 var hint_label: Label
 var grid_button: Button
+var journal_button: Button
 var minimap: Control
 var context_menu: PanelContainer
 var _context_vbox: VBoxContainer
@@ -26,12 +30,14 @@ var pause_screen: Control
 var pause_title: Label
 var help_text: Label
 var resume_button: Button
+var dialogue_box: PanelContainer
+var quest_journal: PanelContainer
 var _title_font: Font
 var _body_font: Font
 var _message_time := 0.0
 var _root: Control
 
-func initialize(world: Node3D, player: Node3D, camera: Camera3D) -> void:
+func initialize(world: Node3D, player: Node3D, camera: Camera3D, game_state: RefCounted = null, dialogue_runner: RefCounted = null) -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_title_font = load("res://assets/fonts/Alegreya.ttf")
 	_body_font = load("res://assets/fonts/Lato-Regular.ttf")
@@ -48,6 +54,8 @@ func initialize(world: Node3D, player: Node3D, camera: Camera3D) -> void:
 	_build_player_panel()
 	_build_actions()
 	_build_context_menu()
+	_build_dialogue_ui(dialogue_runner)
+	_build_journal_ui(game_state, player)
 	_build_pause()
 
 	if player.has_signal("woodcut_progress"):
@@ -185,22 +193,54 @@ func _build_actions() -> void:
 	grid_button = _button("G   Tile grid", func(): grid_toggled.emit())
 	grid_button.tooltip_text = "Show or hide the tile grid (G)"
 	row.add_child(grid_button)
+	journal_button = _button("J   Journal", func(): toggle_journal())
+	journal_button.tooltip_text = "Open or close the quest journal (J)"
+	row.add_child(journal_button)
 	row.add_child(_button("V   Character", func(): inspect_requested.emit()))
 	row.add_child(_button("Home   Recenter", func(): recenter_requested.emit()))
 	row.add_child(_button("?   Controls", func(): show_pause(true)))
-	var footer := VBoxContainer.new()
-	footer.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	footer.offset_left = -250
-	footer.offset_right = -32
-	footer.offset_top = -84
-	footer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(footer)
-	for text in ["Scroll to zoom   /   Right drag to orbit", "Single-player prototype   v0.1"]:
-		var label := _label(text, 13, Color("e4e8d8"))
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		label.add_theme_color_override("font_shadow_color", Color("283e34"))
-		label.add_theme_constant_override("shadow_offset_y", 1)
-		footer.add_child(label)
+
+func _build_dialogue_ui(runner: RefCounted) -> void:
+	if runner == null:
+		return
+	dialogue_box = DialogueBox.new()
+	dialogue_box.initialize(runner, _title_font, _body_font)
+	dialogue_box.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	dialogue_box.offset_left = -340
+	dialogue_box.offset_right = 340
+	dialogue_box.offset_top = -192
+	dialogue_box.offset_bottom = -24
+	_root.add_child(dialogue_box)
+
+func _build_journal_ui(game_state: RefCounted, player: Node3D) -> void:
+	if game_state == null:
+		return
+	quest_journal = QuestJournal.new()
+	quest_journal.initialize(game_state, player, _title_font, _body_font)
+	quest_journal.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	quest_journal.offset_left = -240
+	quest_journal.offset_right = 240
+	quest_journal.offset_top = -180
+	quest_journal.offset_bottom = 180
+	_root.add_child(quest_journal)
+
+func toggle_journal() -> void:
+	if is_instance_valid(quest_journal):
+		quest_journal.toggle_journal()
+
+func is_dialogue_open() -> bool:
+	return is_instance_valid(dialogue_box) and dialogue_box.visible
+
+func is_journal_open() -> bool:
+	return is_instance_valid(quest_journal) and quest_journal.visible
+
+func open_dialogue(dialogue_id: String, speaker_name: String) -> void:
+	if is_instance_valid(dialogue_box):
+		if is_instance_valid(context_menu):
+			context_menu.hide()
+		if is_instance_valid(quest_journal):
+			quest_journal.hide()
+		dialogue_box.open_dialogue(dialogue_id, speaker_name)
 
 func _build_pause() -> void:
 	pause_screen = Control.new()
@@ -225,7 +265,7 @@ func _build_pause() -> void:
 	pause_title = _label("A moment of rest", 40, GOLD, true)
 	pause_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(pause_title)
-	help_text = _label("Left click   Walk to a tile\nMinimap   Click to travel further\nRight drag or Q / E   Orbit camera\nScroll   Zoom in or out\nV   Inspect character\nG   Show the tile grid\nHome   Reset camera\nEsc   Pause or resume", 19, TEXT)
+	help_text = _label("Left click   Walk to a tile\nMinimap   Click to travel further\nRight drag or Q / E   Orbit camera\nScroll   Zoom in or out\nV   Inspect character\nJ   Quest journal\nG   Show the tile grid\nHome   Reset camera\nEsc   Pause or resume", 19, TEXT)
 	help_text.add_theme_constant_override("line_spacing", 13)
 	column.add_child(help_text)
 	column.add_child(_label("Routes avoid trees, buildings and water.\nClick again while walking to change your destination.", 15, MUTED))
@@ -247,6 +287,21 @@ func hide_pause() -> void:
 	resume_button.release_focus()
 
 func _input(event: InputEvent) -> void:
+	# 1. Dialogue box consumes input first
+	if is_dialogue_open():
+		if dialogue_box.handle_input(event):
+			get_viewport().set_input_as_handled()
+			return
+
+	# 2. Quest journal consumes input next
+	if is_journal_open():
+		if event is InputEventKey and event.pressed and not event.echo:
+			if event.keycode == KEY_J or event.keycode == KEY_ESCAPE:
+				quest_journal.hide()
+				get_viewport().set_input_as_handled()
+				return
+
+	# 3. Standard gameplay hotkeys
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
 			KEY_ESCAPE:
@@ -255,6 +310,10 @@ func _input(event: InputEvent) -> void:
 				else:
 					show_pause()
 				get_viewport().set_input_as_handled()
+			KEY_J:
+				if not get_tree().paused:
+					toggle_journal()
+					get_viewport().set_input_as_handled()
 			KEY_G:
 				if not get_tree().paused:
 					grid_toggled.emit()
@@ -324,16 +383,20 @@ func update_state(player: Node3D) -> void:
 			coins_count
 		]
 	travel_label.text = "%d tiles explored" % player.steps if player.steps else "Your journey starts here"
+	if is_dialogue_open():
+		hint_label.text = ""
+		return
 	if _message_time <= 0.0:
 		if player.get("chopping"):
 			hint_label.text = "Chopping tree at tile %d, %d..." % [player.target_tree_tile.x, player.target_tree_tile.y]
 		elif player.motion.moving:
 			hint_label.text = "Walking to tile %d, %d" % [player.motion.destination.x, player.motion.destination.y]
 		else:
-			hint_label.text = "Click a tile to walk, or right-click a tree to Chop"
+			hint_label.text = "Click a tile to walk, or right-click to interact"
 
 func show_message(text: String, seconds := 3.0) -> void:
-	hint_label.text = text
+	if not is_dialogue_open():
+		hint_label.text = text
 	_message_time = seconds
 
 func _process(delta: float) -> void:

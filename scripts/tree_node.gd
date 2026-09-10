@@ -99,16 +99,29 @@ func _build_visuals(materials: Dictionary) -> void:
 		top_sph.position = Vector3(0, height * 0.95, 0)
 		canopy.add_child(top_sph)
 
-	var stump_mesh = MeshInstance3D.new()
-	var stump_cyl = CylinderMesh.new()
-	stump_cyl.top_radius = 0.22
-	stump_cyl.bottom_radius = 0.26
-	stump_cyl.height = 0.32
-	stump_cyl.radial_segments = 8
-	stump_mesh.mesh = stump_cyl
-	stump_mesh.material_override = materials["wood"]
-	stump_mesh.position = Vector3(0, 0.16, 0)
-	stump.add_child(stump_mesh)
+	var stump_asset_key = "%s_stump" % tree_type
+	var stump_asset_path: String = WoodcuttingData.ASSETS.get(stump_asset_key, "")
+	var loaded_stump: bool = false
+	if not stump_asset_path.is_empty() and ResourceLoader.exists(stump_asset_path):
+		var stump_scene = load(stump_asset_path) as PackedScene
+		if stump_scene:
+			var stump_inst = stump_scene.instantiate()
+			stump_inst.name = "StumpMesh"
+			stump.add_child(stump_inst)
+			loaded_stump = true
+
+	if not loaded_stump:
+		var stump_mesh = MeshInstance3D.new()
+		var stump_cyl = CylinderMesh.new()
+		stump_cyl.top_radius = 0.22
+		stump_cyl.bottom_radius = 0.26
+		stump_cyl.height = 0.32
+		stump_cyl.radial_segments = 8
+		stump_mesh.mesh = stump_cyl
+		stump_mesh.material_override = materials.get("wood", null)
+		stump_mesh.position = Vector3(0, 0.16, 0)
+		stump.add_child(stump_mesh)
+
 	stump.visible = false
 
 func damage() -> bool:
