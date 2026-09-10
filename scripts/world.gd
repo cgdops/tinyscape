@@ -2,6 +2,8 @@ extends Node3D
 ## Authored Willowmere diorama. Meshes sharing a shape and palette are batched.
 
 const WoodcuttingData = preload("res://scripts/woodcutting_data.gd")
+const TreeNode = preload("res://scripts/tree_node.gd")
+const LogPileNode = preload("res://scripts/log_pile_node.gd")
 
 const TILE_SIZE = 1.35
 const REGION = Rect2i(-12, -12, 50, 25)
@@ -433,26 +435,8 @@ func _oak(tile: Vector2, height: float) -> void:
 
 func _forest() -> void:
 	# Dedicated Forest diorama: 25x25 (X: 13..37, Z: -12..12)
-	# Harvestable interactive trees (Pine / Oak) scattered across groves and clearings
-	var harvestables = [
-		{"tile": Vector2i(17, 1), "type": "pine", "height": 6.2},
-		{"tile": Vector2i(19, 7), "type": "oak", "height": 5.0},
-		{"tile": Vector2i(21, -3), "type": "pine", "height": 5.8},
-		{"tile": Vector2i(25, -2), "type": "oak", "height": 5.4},
-		{"tile": Vector2i(27, 2), "type": "pine", "height": 6.5},
-		{"tile": Vector2i(29, 6), "type": "oak", "height": 4.8},
-		{"tile": Vector2i(32, -4), "type": "pine", "height": 6.0},
-		{"tile": Vector2i(33, 4), "type": "pine", "height": 5.6},
-		{"tile": Vector2i(30, -7), "type": "oak", "height": 5.2},
-		{"tile": Vector2i(20, -8), "type": "pine", "height": 6.4},
-		{"tile": Vector2i(23, 8), "type": "oak", "height": 4.6},
-		{"tile": Vector2i(34, 0), "type": "pine", "height": 5.9},
-		{"tile": Vector2i(16, 5), "type": "oak", "height": 4.7},
-		{"tile": Vector2i(35, 7), "type": "oak", "height": 5.1},
-		{"tile": Vector2i(4, 1), "type": "willow", "height": 4.8},
-		{"tile": Vector2i(11, 6), "type": "willow", "height": 5.2}
-	]
-	for h in harvestables:
+	# Harvestable interactive trees (Pine / Oak / Willow) scattered across groves and clearings
+	for h in WoodcuttingData.HARVESTABLE_TREES:
 		_create_interactive_tree(h["tile"], h["type"], h["height"])
 
 	# Forest details & lumber camp props
@@ -462,27 +446,15 @@ func _forest() -> void:
 	_lantern_post(Vector2(26.5, 4.8))
 	_signpost(Vector2(13.8, 2.3))
 
-	# Woodcutter's logpile in lumber clearing (LOGPILE_TILE = Vector2i(22, 1))
+	# Woodcutter's logpile in lumber clearing
 	_block(LOGPILE_TILE, "building")
-	logpile_node = Node3D.new()
-	logpile_node.name = "LogPile"
-	logpile_node.position = tile_to_world(LOGPILE_TILE)
-	add_child(logpile_node)
-
-	# Empty cradle frame asset
-	var empty_asset = load("res://assets/models/woodcutting/LogPileEmpty.glb") as PackedScene
-	if empty_asset:
-		logpile_empty_mesh = empty_asset.instantiate()
-		logpile_empty_mesh.name = "EmptyFrame"
-		logpile_node.add_child(logpile_empty_mesh)
-
-	# Stacked logs frame asset (visible when holding deposited logs)
-	var stacked_asset = load("res://assets/models/woodcutting/LogPileStacked.glb") as PackedScene
-	if stacked_asset:
-		logpile_stacked_mesh = stacked_asset.instantiate()
-		logpile_stacked_mesh.name = "StackedLogs"
-		logpile_node.add_child(logpile_stacked_mesh)
-		logpile_stacked_mesh.visible = false
+	var pile = LogPileNode.new()
+	pile.initialize(LOGPILE_TILE)
+	pile.position = tile_to_world(LOGPILE_TILE)
+	add_child(pile)
+	logpile_node = pile
+	logpile_empty_mesh = pile.empty_mesh
+	logpile_stacked_mesh = pile.stacked_mesh
 
 	# Forest mossy boulders
 	for boulder in [Vector2i(15, -9), Vector2i(28, -9), Vector2i(35, -9), Vector2i(15, 9), Vector2i(32, 9)]:
@@ -498,170 +470,74 @@ func _forest() -> void:
 
 func _create_interactive_tree(tile: Vector2i, type: String, height: float) -> void:
 	_block(tile, "tree")
-	var root_node = Node3D.new()
-	root_node.name = "Tree_%d_%d" % [tile.x, tile.y]
-	root_node.position = tile_to_world(tile)
-	add_child(root_node)
+	var tree_comp = TreeNode.new()
+	tree_comp.initialize(tile, type, height, _materials)
+	tree_comp.position = tile_to_world(tile)
+	add_child(tree_comp)
 
-	var canopy = Node3D.new()
-	canopy.name = "Canopy"
-	root_node.add_child(canopy)
+	tree_comp.state_changed.connect(func(t: Vector2i, is_stump: bool):
+		if is_stump:
+			_unblock(t, "grass")
+		else:
+			_block(t, "tree")
+		tree_state_changed.emit(t, is_stump)
+	)
 
-	var stump = Node3D.new()
-	stump.name = "Stump"
-	root_node.add_child(stump)
-
-	# Build tree visual nodes
-	var trunk_mesh = MeshInstance3D.new()
-	var cyl = CylinderMesh.new()
-	cyl.top_radius = 0.20 if type == "pine" else 0.24
-	cyl.bottom_radius = 0.23 if type == "pine" else 0.28
-	cyl.height = height * 0.44
-	cyl.radial_segments = 8
-	trunk_mesh.mesh = cyl
-	trunk_mesh.material_override = _materials["wood"]
-	trunk_mesh.position = Vector3(0, height * 0.22, 0)
-	canopy.add_child(trunk_mesh)
-
-	if type == "pine":
-		for tier in range(3):
-			var cone_node = MeshInstance3D.new()
-			var cone_mesh = CylinderMesh.new()
-			cone_mesh.top_radius = 0.0
-			var rad = height * (0.28 - tier * 0.054)
-			cone_mesh.bottom_radius = rad
-			cone_mesh.height = height * 0.49
-			cone_mesh.radial_segments = 7
-			cone_node.mesh = cone_mesh
-			cone_node.material_override = _materials[["pine_dark", "pine", "pine_light"][tier]]
-			cone_node.position = Vector3(0, height * (0.41 + tier * 0.20) + height * 0.245, 0)
-			cone_node.rotation.y = tier * 0.55
-			canopy.add_child(cone_node)
-	elif type == "willow":
-		trunk_mesh.visible = false
-		var willow_asset = load("res://assets/models/woodcutting/WillowTree.glb") as PackedScene
-		if willow_asset:
-			var willow_inst = willow_asset.instantiate()
-			willow_inst.name = "WillowMesh"
-			canopy.add_child(willow_inst)
-	else:
-		# Oak canopy spheres
-		for i in range(5):
-			var angle = i * TAU / 5.0
-			var sph_node = MeshInstance3D.new()
-			var sph = SphereMesh.new()
-			sph.radius = 1.0
-			sph.height = 2.0
-			sph.radial_segments = 8
-			sph.rings = 4
-			sph_node.mesh = sph
-			sph_node.scale = Vector3(1.30, 1.13, 1.20)
-			sph_node.material_override = _materials[["oak", "oak_light", "oak_dark"][i % 3]]
-			sph_node.position = Vector3(cos(angle) * 0.98, height * 0.69, sin(angle) * 0.98)
-			canopy.add_child(sph_node)
-		var top_sph = MeshInstance3D.new()
-		var top_mesh = SphereMesh.new()
-		top_mesh.radius = 1.0
-		top_mesh.height = 2.0
-		top_mesh.radial_segments = 8
-		top_mesh.rings = 4
-		top_sph.mesh = top_mesh
-		top_sph.scale = Vector3(1.12, 0.96, 1.07)
-		top_sph.material_override = _materials["oak_light"]
-		top_sph.position = Vector3(0, height * 0.95, 0)
-		canopy.add_child(top_sph)
-
-	# Stump visual (remains visible when felled)
-	var stump_mesh = MeshInstance3D.new()
-	var stump_cyl = CylinderMesh.new()
-	stump_cyl.top_radius = 0.22
-	stump_cyl.bottom_radius = 0.26
-	stump_cyl.height = 0.32
-	stump_cyl.radial_segments = 8
-	stump_mesh.mesh = stump_cyl
-	stump_mesh.material_override = _materials["wood"]
-	stump_mesh.position = Vector3(0, 0.16, 0)
-	stump.add_child(stump_mesh)
-	stump.visible = false
-
-	var tree_info = WoodcuttingData.get_tree_info(type)
-	var hp = tree_info.get("hit_points", 4)
-
-	trees[tile] = {
-		"tile": tile,
-		"type": type,
-		"height": height,
-		"is_stump": false,
-		"hit_points": hp,
-		"max_hp": hp,
-		"respawn_timer": 0.0,
-		"node": root_node,
-		"canopy": canopy,
-		"stump": stump
-	}
+	trees[tile] = tree_comp.to_dict()
 
 func damage_tree(tile: Vector2i) -> bool:
 	if not trees.has(tile):
 		return false
 	var tree_data = trees[tile]
-	if tree_data["is_stump"]:
-		return false
-	tree_data["hit_points"] -= 1
-	if tree_data["hit_points"] <= 0:
-		chop_tree(tile)
-		return true
+	var node = tree_data.get("node")
+	if is_instance_valid(node) and node is TreeNode:
+		var felled = node.damage()
+		trees[tile] = node.to_dict()
+		return felled
 	return false
 
 func chop_tree(tile: Vector2i) -> bool:
 	if not trees.has(tile):
 		return false
 	var tree_data = trees[tile]
-	if tree_data["is_stump"]:
-		return false
-	tree_data["is_stump"] = true
-	tree_data["hit_points"] = 0
-	tree_data["canopy"].visible = false
-	tree_data["stump"].visible = true
-	var tree_info = WoodcuttingData.get_tree_info(tree_data.get("type", "oak"))
-	tree_data["respawn_timer"] = tree_info.get("respawn_time", 25.0)
-	_unblock(tile, "grass")
-	tree_state_changed.emit(tile, true)
-	return true
+	var node = tree_data.get("node")
+	if is_instance_valid(node) and node is TreeNode:
+		var felled = node.fell()
+		trees[tile] = node.to_dict()
+		return felled
+	return false
 
 func respawn_tree(tile: Vector2i) -> void:
 	if not trees.has(tile):
 		return
 	var tree_data = trees[tile]
-	if not tree_data["is_stump"]:
-		return
-	tree_data["is_stump"] = false
-	tree_data["hit_points"] = tree_data.get("max_hp", 4)
-	tree_data["canopy"].visible = true
-	tree_data["stump"].visible = false
-	tree_data["respawn_timer"] = 0.0
-	_block(tile, "tree")
-	tree_state_changed.emit(tile, false)
+	var node = tree_data.get("node")
+	if is_instance_valid(node) and node is TreeNode:
+		node.respawn()
+		trees[tile] = node.to_dict()
 
 func set_logpile_has_logs(has_logs: bool) -> void:
 	logpile_has_logs = has_logs
-	if is_instance_valid(logpile_empty_mesh):
-		logpile_empty_mesh.visible = not has_logs
-	if is_instance_valid(logpile_stacked_mesh):
-		logpile_stacked_mesh.visible = has_logs
+	if is_instance_valid(logpile_node) and logpile_node is LogPileNode:
+		logpile_node.set_has_logs(has_logs)
 
 func is_tree_at(tile: Vector2i) -> bool:
 	return trees.has(tile) and not trees[tile]["is_stump"]
 
 func get_tree_data(tile: Vector2i) -> Dictionary:
+	if trees.has(tile):
+		var node = trees[tile].get("node")
+		if is_instance_valid(node) and node is TreeNode:
+			return node.to_dict()
 	return trees.get(tile, {})
 
 func _process(delta: float) -> void:
 	for tile in trees:
 		var tree_data = trees[tile]
-		if tree_data["is_stump"]:
-			tree_data["respawn_timer"] -= delta
-			if tree_data["respawn_timer"] <= 0.0:
-				respawn_tree(tile)
+		var node = tree_data.get("node")
+		if is_instance_valid(node) and node is TreeNode:
+			node.advance(delta)
+			trees[tile] = node.to_dict()
 
 func _fences() -> void:
 	# North and South outer boundary rails along Willowmere + Forest

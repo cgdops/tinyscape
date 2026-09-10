@@ -1,8 +1,37 @@
-﻿# TinyScape — Woodcutting Skill & Economy Table
+# TinyScape — Woodcutting Skill & Economy Table
 class_name WoodcuttingData
 extends RefCounted
 
 const MAX_INVENTORY_SLOTS: int = 28
+const LOGPILE_TILE: Vector2i = Vector2i(22, 1)
+
+# Central asset manifests
+const ASSETS: Dictionary = {
+	"willow_tree": "res://assets/models/woodcutting/WillowTree.glb",
+	"cut_log": "res://assets/models/woodcutting/CutLog.glb",
+	"logpile_empty": "res://assets/models/woodcutting/LogPileEmpty.glb",
+	"logpile_stacked": "res://assets/models/woodcutting/LogPileStacked.glb"
+}
+
+# Authoritative harvestable tree spawn registry
+const HARVESTABLE_TREES: Array[Dictionary] = [
+	{"tile": Vector2i(17, 1), "type": "pine", "height": 6.2},
+	{"tile": Vector2i(19, 7), "type": "oak", "height": 5.0},
+	{"tile": Vector2i(21, -3), "type": "pine", "height": 5.8},
+	{"tile": Vector2i(25, -2), "type": "oak", "height": 5.4},
+	{"tile": Vector2i(27, 2), "type": "pine", "height": 6.5},
+	{"tile": Vector2i(29, 6), "type": "oak", "height": 4.8},
+	{"tile": Vector2i(32, -4), "type": "pine", "height": 6.0},
+	{"tile": Vector2i(33, 4), "type": "pine", "height": 5.6},
+	{"tile": Vector2i(30, -7), "type": "oak", "height": 5.2},
+	{"tile": Vector2i(20, -8), "type": "pine", "height": 6.4},
+	{"tile": Vector2i(23, 8), "type": "oak", "height": 4.6},
+	{"tile": Vector2i(34, 0), "type": "pine", "height": 5.9},
+	{"tile": Vector2i(16, 5), "type": "oak", "height": 4.7},
+	{"tile": Vector2i(35, 7), "type": "oak", "height": 5.1},
+	{"tile": Vector2i(4, 1), "type": "willow", "height": 4.8},
+	{"tile": Vector2i(11, 6), "type": "willow", "height": 5.2}
+]
 
 # R3: XP Curve (Level 1..20) per docs/design/woodcutting-skill.md §3 table
 const XP_TABLE: Array[int] = [
