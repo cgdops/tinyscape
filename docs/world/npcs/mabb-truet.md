@@ -70,18 +70,26 @@ never the Charter register: hand-made, mended, mismatched.
 - **Silhouette at 5 m:** a squat, wide, planted shape with a strong horizontal at the shoulders. No
   cape, no long hem, nothing that flutters. Legible against the log pile by being wider and darker
   than it.
-- **Palette,** from the approved table — no new colours:
-  - Sleeveless overtunic in **Canopy shadow** `#4c583a`, over long sleeves in **Cream plaster**
-    `#f8f7ca` pushed slightly grey.
-  - Heavy apron and gloves in **Walnut** `#976a4d`, worn dark to **Walnut dark** `#89543c` at the
-    edges where the work happens.
-  - Trousers and boots in **Deep pine** `#283c31` — the darkest value on her, anchoring her to the
-    ground.
+- **Palette** — all albedo values from [art-direction.md](../../art-direction.md) §2, no new
+  colours. **These are material values, not screenshot colours; the key light will lift them.**
+  - Sleeveless overtunic in **Canopy shadow** `#607840`, over long sleeves in **Cream plaster**
+    `#e1cfaa`.
+  - Heavy apron and gloves in **Chestnut leather** `#8a5f44`, worn to **Walnut dark** `#3a3026` at
+    the edges where the work happens.
+  - Trousers and boots in **Deep pine** `#284636` — the darkest value on her, anchoring her to the
+    ground. Soles in **Boot sole** `#4c4338`.
   - **Brass** `#d4b16d` on exactly one thing: a buckle or a tally-hook at her belt. One point of
     metal, no more.
-  - **No terracotta.** That accent belongs to the roofs, and it should stay theirs.
-- **Grey hair, short, tied back and out of the way.** A weathered face — the head is what carries
-  her in the chathead box, so it takes more facet detail than the body does.
+  - **No terracotta**, and **no teal or saffron** — those belong to the roofs and to the player
+    respectively.
+- **Grey hair, short, tied back and out of the way.** **Hair ash** `#8f8b7e`, with **Hair ash light**
+  `#a8a396` on the sunlit facets. Deliberately a warm-green grey rather than a blue-grey, so she
+  sits with the village stonework instead of standing out of it.
+- **A weathered face** in **Skin weathered** `#b3805e`, lit facets **Skin weathered light**
+  `#c79a76` — ruddier and a value-step darker than the adventurer's `#ce9e7c`, because she works
+  outdoors and the adventurer has just arrived. Eyes and brows in **Ink** `#2c2f29`, eye whites **Eye ivory**
+  `#f6f1df`. The head carries her in the chathead box, so it takes roughly twice the facet density
+  of the body (§7b).
 - **Held or nearby:** a felling axe, heavier and plainer than the player's. Leaning against the pile
   is better than in her hand — it lets the idle animation be her hands working rather than posing.
 

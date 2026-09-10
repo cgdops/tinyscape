@@ -63,3 +63,6 @@ user's sign-off) · `implemented` (exists in the build).
   then the whole curve scaled ×10 so the level-15 pine gate takes ~66 minutes rather than ~7.
   Per-log XP, log values, intervals and hit points unchanged. Thursday's Float's XP reward scaled
   with it, to 2 500.
+- 2026-09-10 — Art bible palette rebuilt as **albedo values** after it blocked modelling twice. The
+  previous table was screenshot-sampled lit colour, which is not what a modeller assigns. Character
+  colours recorded for the first time, including four new entries for weathered skin and grey hair.
