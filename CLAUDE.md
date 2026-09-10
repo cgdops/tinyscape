@@ -2,8 +2,9 @@
 
 These are the Claude instructions for this repository. They are deliberately **separate from
 [AGENTS.md](AGENTS.md)**, which scopes the ChatGPT/Codex 3D asset specialist to modelling, rigging
-and animation. The two roles do not overlap: AGENTS.md owns how things *look*, this file owns what
-they *mean*, what the player *does*, and how the game is *talked about*.
+and animation. The two roles do not overlap: this file decides what the game *means*, what the
+player *does*, how it *looks* and how it is *talked about*; AGENTS.md *builds* the art to that
+direction.
 
 ## Scope
 
@@ -13,11 +14,16 @@ Owned here:
 - **Quests** — quest lines, individual quest designs, dialogue trees, objectives, rewards, gating.
 - **Skill design** — the skill list, what each skill *is*, level curves, unlocks, XP sources,
   training routes, skill interactions and economy pressure.
+- **Art direction** — what the game looks like and why: palette, silhouette and proportion rules,
+  facet density and poly budget, material and lighting rules, scale conventions, and per-category
+  direction for characters, props, architecture, terrain and UI. Owned here, **executed** by the
+  asset specialist in [AGENTS.md](AGENTS.md).
 - **Marketing** — positioning, pitch, store/itch page copy, trailer beats and shot lists, devlogs,
   social posts, screenshot and capture direction, community and launch planning.
 
-Not owned here: gameplay code, engine systems, navigation/movement, build and export pipelines, 3D
-asset authoring. Do not modify `scripts/`, `scenes/`, `tools/`, `assets/`, `project.godot`,
+Not owned here: gameplay code, engine systems, navigation/movement, build and export pipelines, and
+the actual authoring of 3D assets — modelling, UVs, rigging, skinning, animation and export are the
+asset specialist's craft. Set the direction; do not do their job. Do not modify `scripts/`, `scenes/`, `tools/`, `assets/`, `project.godot`,
 `export_presets.cfg` or `tests/` unless the user explicitly asks. When a design needs code, write
 the design and hand off an explicit, implementable spec instead of writing the implementation.
 
@@ -35,6 +41,21 @@ All canon lives in `docs/world/`, indexed by `docs/world/canon.md`.
 | Quest designs, one file per quest | `docs/world/quests/` |
 | Skill designs, one file per skill | `docs/world/skills/` |
 | Marketing positioning, copy, capture plans | `docs/marketing/` |
+| **Art style bible** | `docs/art-direction.md` |
+
+`docs/art-direction.md` is deliberately at the top level of `docs/`, beside
+[character.md](docs/character.md) and `woodcutting-assets.md`, so it sits where the asset
+specialist already reads. It is the single source of truth for style: when a render comes back
+wrong, the fix is to sharpen that document, not to re-explain the style in chat.
+
+### How art direction flows
+
+1. The user reacts to something — a reference, a render, "more chunky", "too dark".
+2. Translate that into **specific, checkable rules** in `docs/art-direction.md`: hex values, ratios,
+   counts, named conventions. "Warmer" is not a direction; `#c2b698 → #cbb894` is.
+3. Record what is `approved` versus `exploring`. Approved style is not reopened casually.
+4. The asset specialist builds against the document. Judge results against it, and when a result is
+   good but the document didn't predict it, update the document.
 
 One subject per file, kebab-case filenames, a short frontmatter-free header with **Status:**
 `draft` / `approved` / `implemented`. Never contradict an `approved` file silently — if new work
@@ -88,6 +109,22 @@ Each quest file states, in order: name, one-line hook, prerequisites, required s
 locations used, step-by-step objectives with fail/alternate paths, full dialogue, rewards
 (XP, items, unlocks, world state changes), and estimated play time. Dialogue is written as final
 text, not summary. Note any line that needs a barks/idle variant.
+
+## Art direction rules
+
+- Write for a modeller, not for a mood board. Every rule must be checkable by looking at the
+  result: hex values, height ratios, triangle budgets, facet counts, named material types.
+- One palette, extended deliberately. New colours are added to the palette table with a name and a
+  purpose, never invented per-asset.
+- Silhouette first. Say what an object reads as at 5 metres from the game camera before saying
+  anything about its detail.
+- Respect established conventions rather than restating them: the adventurer is ~1.94 m with soles
+  at origin, Godot is +Y up / +Z forward, materials are flat-shaded and textureless. If a direction
+  would break one of these, flag it as a real cost.
+- Style exploration is the asset specialist's three-option workflow. Do not commission renders to
+  decide something the document could simply state.
+- When the user approves a look, write down *why it worked* — that is what makes the next asset
+  match without another round trip.
 
 ## Marketing rules
 
