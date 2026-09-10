@@ -24,18 +24,28 @@ user's sign-off) · `implemented` (exists in the build).
 
 ## NPCs
 
-- **Mabb Truet** — Willowmere's woodcutter; buys logs, floats them to Harrowick. Leaves something
-  at every stump and never explains it. Defined in
-  [design/woodcutting-skill.md](../design/woodcutting-skill.md) §6. Status: `approved`, minimal.
+- [mabb-truet.md](npcs/mabb-truet.md) — **Mabb Truet**, Willowmere's woodcutter. Buys logs, floats
+  them to Harrowick, leaves something at every stump and never explains it. The game's first speaking
+  character, tutorial and quest giver. Status: `approved`; depends on the dialogue system.
 
 ## Quests
 
-_None yet._
+- [thursdays-float.md](quests/thursdays-float.md) — **Thursday's Float.** Cut 20 willow logs for
+  Mabb. The first quest; 8–12 minutes. Status: `approved`; blocked on dialogue and quest state.
 
 ## Skills
 
 - [woodcutting-skill.md](../design/woodcutting-skill.md) — tiers, XP curve, inventory, log sink.
-  Status: `approved`, in development.
+  Status: `approved`, `implemented`. One open tuning question — see the note in §3.
+
+## Systems
+
+- [dialogue-system.md](../design/dialogue-system.md) — NPCs, the OSRS-style dialogue box, chatheads,
+  the dialogue data format. Status: `approved`, commissioned.
+- [quest-system.md](../design/quest-system.md) — flags, quest states, the journal. Status:
+  `approved`, commissioned.
+- **Firemaking** — considered as the second skill and **shelved**. Burning logs is only meaningful
+  once Cooking consumes the fire, and Cooking is not designed. Do not build it as a log sink.
 
 ## Changelog
 
@@ -43,3 +53,7 @@ _None yet._
 - 2026-09-10 — Three world bible directions proposed. None selected.
 - 2026-09-10 — Direction chosen (Shipwright's Coast + Tithe). World bible written.
 - 2026-09-10 — Woodcutting skill designed. Mabb Truet established as the first named NPC.
+- 2026-09-10 — Woodcutting implemented and merged. Firemaking shelved as premature without Cooking.
+- 2026-09-10 — Dialogue and quest state commissioned as the next system. Mabb Truet expanded into
+  a full NPC with a chathead, tutorial dialogue and the first quest, *Thursday's Float*. NPC and
+  chathead rules added to the art direction as §7b.

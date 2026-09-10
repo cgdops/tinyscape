@@ -125,6 +125,45 @@ Dark timber-green panels (`#415247`) with fine brass edging and warm off-white t
 place names and the wordmark; quiet sans-serif for controls. Panels sit in the corners; the centre
 of the screen stays clear.
 
+## 7b. NPCs and the chathead — `approved`
+
+Added for [design/dialogue-system.md](design/dialogue-system.md). Villagers are the first characters
+in the scene other than the player, and the rules that keep them coherent are these.
+
+**Villagers are shorter and wider than the adventurer.** The adventurer is ~1.94 m; village adults
+run **1.65–1.78 m**, with a **wider shoulder-to-hip ratio**. The player should read as the tall,
+lightly-built newcomer among people built by work. This is the single most important proportion rule
+here — get it wrong and the cast looks like reskins.
+
+**Silhouette at 5 m.** Every villager must be identifiable by outline alone from the game camera.
+That means one strong shape decision each — a wide apron, a stooped back, a hat brim — not a
+costume detail. No capes, no long flowing hems, nothing that reads as adventuring gear.
+
+**Register, per [§8](#8-how-the-worlds-fiction-shapes-the-art).** Village characters wear the
+Village register: mended, mismatched, hand-made. Charter and guild characters, when they exist, wear
+the Charter register: matched, stamped, slightly officious. A villager should never look issued.
+
+**Palette.** Characters draw from the approved table and add nothing. Work clothes take **Canopy
+shadow**, **Walnut** and **Deep pine**; linens take **Cream plaster** pushed grey. **Terracotta
+`#ca7854` is reserved for roofs** and does not appear on a character — it is the scene's one
+saturated warm accent and it stops working if it walks around. **Brass `#d4b16d` appears on exactly
+one small object per character** — a buckle, a hook, a clasp.
+
+**Heads carry more facet detail than bodies.** A head that reads at 5 m is not the same as one that
+reads at 256 px in a dialogue box. Give the head roughly **twice the facet density** of the torso,
+concentrated on brow, cheekbone and jaw. Everything else stays as coarse as the props.
+
+**Rig contract.** Every character carries a node or bone named `Head`, positioned at the base of the
+skull, whose forward axis is the character's forward axis. The dialogue chathead frames itself from
+this node, so a missing or misaligned `Head` is a broken feature, not a cosmetic flaw. All other
+conventions from [§6](#6-scale-and-engine-conventions--approved) apply unchanged: soles at origin,
+`(1,1,1)` scale, +Y up / +Z forward, flat-shaded and textureless.
+
+**Chathead framing.** 256 × 256, transparent background, head filling ~80% of the square with the
+chin on the lower third, turned a few degrees toward the text rather than facing the camera square
+on. Lit by the same warm key as the scene ([§5](#5-lighting--approved)) so the head in the box and
+the head in the world are recognisably the same person.
+
 ## 8. How the world's fiction shapes the art — `draft`
 
 From the [world bible](world/lore/world-bible.md). The setting is a working frontier, and the art

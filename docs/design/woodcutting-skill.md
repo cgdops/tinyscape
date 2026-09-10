@@ -89,6 +89,14 @@ about 1.10× per level, which is the shape RuneScape uses and the reason early l
 | 9 | 1 135 | 19 | 5 440 |
 | 10 | 1 390 | 20 | 6 460 |
 
+> **Open — the curve is not monotonic and needs your call (raised 2026-09-10).** Level 10 is
+> 1 390 XP and level 11 is 1 250. The two-column table was authored wrong and
+> `scripts/woodcutting_data.gd:19` faithfully implements the error, so a player currently
+> de-levels crossing 10. The shape stated above (~1.10× per level, and accelerating) and the
+> level-15 target of 2 670 XP cannot both hold: continuing the L1–L10 curve puts level 15 nearer
+> **3 385 XP**, about two hours rather than ninety minutes. Either the pine gate moves later or
+> levels 11–15 flatten. **Not fixed here** — it changes approved pacing.
+
 **Pacing assumption:** at 25 XP per oak log and one log per 1.8 s (plus walking and unloading, call
 it an effective 3 s per log), level 15 is roughly **90 minutes** of steady cutting. That is the
 intended feel — a real but not punishing wall in front of pine. **These numbers are tuning
