@@ -35,26 +35,26 @@ const HARVESTABLE_TREES: Array[Dictionary] = [
 
 # R3: XP Curve (Level 1..20) per docs/design/woodcutting-skill.md §3 table
 const XP_TABLE: Array[int] = [
-	0,     # Level 1
-	85,    # Level 2
-	180,   # Level 3
-	290,   # Level 4
-	415,   # Level 5
-	560,   # Level 6
-	725,   # Level 7
-	915,   # Level 8
-	1135,  # Level 9
-	1390,  # Level 10
-	1250,  # Level 11 (per spec table in §3)
-	1520,  # Level 12
-	1840,  # Level 13
-	2220,  # Level 14
-	2670,  # Level 15
-	3200,  # Level 16
-	3830,  # Level 17
-	4570,  # Level 18
-	5440,  # Level 19
-	6460   # Level 20
+	0,      # Level 1
+	850,    # Level 2
+	1800,   # Level 3
+	2900,   # Level 4
+	4150,   # Level 5
+	5600,   # Level 6
+	7250,   # Level 7
+	9150,   # Level 8
+	11350,  # Level 9
+	13900,  # Level 10
+	16250,  # Level 11
+	18700,  # Level 12
+	21250,  # Level 13
+	23900,  # Level 14
+	26700,  # Level 15
+	32000,  # Level 16
+	38300,  # Level 17
+	45700,  # Level 18
+	54400,  # Level 19
+	64600   # Level 20
 ]
 
 # R2, R4, R5: Tree Tiers, Timers, HP & Economy
