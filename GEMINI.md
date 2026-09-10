@@ -41,3 +41,35 @@ When a game design concept is proposed:
    - Design with O(N) or O(N log N) scaling and memory caching in mind.
 4. **Clean Code & Test Coverage**:
    - Keep systems modular, well-documented, and covered with automated headless verification scripts.
+
+## Branching and file ownership
+
+This is a multi-agent repository. Three agents work in parallel and each owns a distinct set of
+files:
+
+| Agent | Instructions | Branch | Owns |
+| --- | --- | --- | --- |
+| Director | `CLAUDE.md` | `narrative-art` | `docs/` — story, quests, skills, art direction, marketing, design requirements |
+| 3D asset specialist | `AGENTS.md` | `codex/3d-assets` | `assets/`, `tools/` for asset generation, asset docs, asset screenshots |
+| Gameplay engineer | `GEMINI.md` | `gemini/gameplay-engineering` | `scripts/`, `scenes/`, `tests/`, `project.godot`, `export_presets.cfg` |
+
+**`main` is the shared source of truth.** The director publishes approved requirements to `main`.
+Read requirements from `main`, implement on your own branch, and open a pull request back to `main`.
+
+### Rules
+
+1. **Commit only files you own.** Never commit another agent's files, even when they are sitting
+   uncommitted in your working tree — including work you can see but did not produce. If another
+   agent's work is uncommitted and appears to be finished, say so and leave it alone; it is theirs
+   to commit on their own branch. Sweeping it into your commit destroys their branch history and
+   makes their pull request impossible to review.
+2. **Start every piece of work from current `main`.** `git fetch origin && git rebase origin/main`
+   (or branch fresh from `origin/main`) before you begin, so your pull request contains only your
+   changes.
+3. **Stay on your own branch.** Never commit directly to `main`, and never push to another agent's
+   branch.
+4. **Never commit build artefacts.** `.godot/` and `builds/` are gitignored — keep it that way.
+5. **One pull request per coherent piece of work**, targeting `main`, describing what changed, why,
+   and how it was verified. Reference the requirement in `docs/design/` it implements, if any.
+6. If something you need is owned by another agent, **request it rather than editing it** — raise it
+   in your handoff so the owner or the user can act.
