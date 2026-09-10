@@ -1,0 +1,19 @@
+{
+  "triangles": 60,
+  "geometry_and_material_buffers_unchanged": true,
+  "anchor_roundtrip_verified": true,
+  "render_size": [
+    128,
+    128
+  ],
+  "vertical_fov_degrees": 30,
+  "transparent_background": true,
+  "geometry_modified": false,
+  "alpha_bounds_pixels": [
+    17,
+    32,
+    118,
+    89
+  ],
+  "engine_bag_render_verified": false
+}
