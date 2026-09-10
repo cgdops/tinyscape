@@ -1,0 +1,21 @@
+{
+  "axe_triangles": 160,
+  "animations_seconds": {
+    "Idle": 3.0,
+    "Walk": 1.0,
+    "Wood Cutting": 1.8
+  },
+  "swing": "horizontal right-to-left",
+  "cutting_edge_height_range_m": 5.960464477539062e-07,
+  "attachment_bone": "AxeSocket.R",
+  "attachment_mount": "AxeMount.R",
+  "attachment_error_m": 3.0719530773294423e-08,
+  "planted_foot_error_m": 1.4901161193847656e-08,
+  "loop_matrix_error": 0.0,
+  "solved_palm_error_m": 2.682209014892578e-07,
+  "original_character_preserved": true,
+  "exported_socket_child_verified": true,
+  "exported_loop_error": 0.0,
+  "existing_clip_max_difference": 0,
+  "verified_weighted_vertices": 7426
+}

@@ -1,0 +1,17 @@
+{
+  "file": "E:\\GitHub\\tinyscape\\assets\\models\\adventurer.glb",
+  "animations_seconds": {
+    "Idle": 3.0,
+    "Walk": 1.0
+  },
+  "triangles": 3522,
+  "bones": 17,
+  "materials": 17,
+  "bytes": 471808,
+  "forward_godot": "+Z",
+  "up_godot": "+Y",
+  "height_rest": 1.938,
+  "verified_weighted_vertices": 7426,
+  "cyclic_endpoint_max_error": 1.4695761072969157e-18,
+  "planted_ankle_max_error_meters": 1.0609626768798286e-07
+}
