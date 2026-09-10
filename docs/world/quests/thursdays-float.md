@@ -126,7 +126,7 @@ Falls back to `menu`.
 Menu option: *"I've got your twenty willow logs."*
 
 Effects, in order: `take_items: ["Willow Log", 20]`, `give_coins: 150`,
-`give_xp: [woodcutting, 250]`, `set_quest: [thursdays_float, complete]`,
+`give_xp: [woodcutting, 2500]`, `set_quest: [thursdays_float, complete]`,
 `set_flag: [mabb_trusts_you, true]`,
 `message: "Quest complete: Thursday's Float"`
 
@@ -167,7 +167,7 @@ Falls back to `menu`.
 | Reward | Amount | Why |
 | --- | --- | --- |
 | Coins | 150 | Against 80 for selling the same logs at the pile. The quest is worth doing, and 150 is a meaningful fraction of a first weapon whenever one exists |
-| Woodcutting XP | 250 | Ten oak logs' worth — level 3 from a standing start. It should feel like a shortcut, not a skip. **If the XP curve is scaled up ([woodcutting-skill.md](../../design/woodcutting-skill.md) §3), scale this with it** so the reward keeps the same meaning |
+| Woodcutting XP | 2 500 | **Level 3 from a standing start**, which is the figure that matters — it should feel like a shortcut, not a skip. Scaled with the ×10 curve ([woodcutting-skill.md](../../design/woodcutting-skill.md) §3); at the old magnitude 250 XP would now barely reach level 2. It is generous against the ~400 XP earned cutting the logs themselves, and that is intended: the first quest should visibly beat grinding |
 | Flag `mabb_trusts_you` | true | Not spent by anything yet. It is the hook the shop and the next quest read |
 | World state | None | Nothing in the scene changes |
 
@@ -187,7 +187,7 @@ player cannot use is worse than coins they can.
 1. The offer appears only at `unstarted`; the re-offer only at `offered`.
 2. Accepting sets `active` and shows one HUD line.
 3. The hand-in option is invisible below 20 willow logs and visible at 20 or more.
-4. Handing in removes exactly 20 willow logs, pays 150 coins and 250 XP, and sets `complete`.
+4. Handing in removes exactly 20 willow logs, pays 150 coins and 2 500 XP, and sets `complete`.
 5. Handing in with 25 logs leaves the player 5.
 6. Any XP awarded can trigger a level-up through the normal path.
 7. The completed quest reads correctly in the journal and cannot be re-completed.

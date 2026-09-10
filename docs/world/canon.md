@@ -36,7 +36,9 @@ user's sign-off) · `implemented` (exists in the build).
 ## Skills
 
 - [woodcutting-skill.md](../design/woodcutting-skill.md) — tiers, XP curve, inventory, log sink.
-  Status: `approved`, `implemented`. One open tuning question — see the note in §3.
+  Status: `approved`, `implemented`. **The XP curve was corrected on 2026-09-10** — it was
+  non-monotonic at level 11 and an order of magnitude too small. Level 15 is now 26 700 XP,
+  ~66 minutes. `scripts/woodcutting_data.gd` still holds the old values and needs syncing.
 
 ## Systems
 
@@ -57,3 +59,7 @@ user's sign-off) · `implemented` (exists in the build).
 - 2026-09-10 — Dialogue and quest state commissioned as the next system. Mabb Truet expanded into
   a full NPC with a chathead, tutorial dialogue and the first quest, *Thursday's Float*. NPC and
   chathead rules added to the art direction as §7b.
+- 2026-09-10 — Woodcutting XP curve corrected: levels 11-15 flattened to remove a de-levelling bug,
+  then the whole curve scaled ×10 so the level-15 pine gate takes ~66 minutes rather than ~7.
+  Per-log XP, log values, intervals and hit points unchanged. Thursday's Float's XP reward scaled
+  with it, to 2 500.
