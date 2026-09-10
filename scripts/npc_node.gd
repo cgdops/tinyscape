@@ -12,6 +12,11 @@ var dialogue_file: String = "mabb_truet"
 var model: Node3D
 var head_target: Node3D
 
+var pick_area: Area3D
+var pick_collision: CollisionShape3D
+var is_highlighted: bool = false
+static var _outline_material: StandardMaterial3D
+
 func initialize(
 	p_id: String,
 	p_name: String,
@@ -29,8 +34,27 @@ func initialize(
 	dialogue_file = p_dialogue
 	name = "NPC_%s" % id
 
+	_setup_collision()
 	_build_model(materials)
 	reset_facing()
+
+func _setup_collision() -> void:
+	pick_area = Area3D.new()
+	pick_area.name = "PickArea"
+	pick_area.collision_layer = 2
+	pick_area.collision_mask = 0
+	pick_area.monitoring = false
+	pick_area.monitorable = true
+
+	pick_collision = CollisionShape3D.new()
+	var cap_shape = CapsuleShape3D.new()
+	# Height 1.70m, radius ~0.25m (R1: roughly 0.45m across, full height)
+	cap_shape.radius = 0.25
+	cap_shape.height = 1.70
+	pick_collision.shape = cap_shape
+	pick_collision.position = Vector3(0, 0.85, 0)
+	pick_area.add_child(pick_collision)
+	add_child(pick_area)
 
 func _build_model(materials: Dictionary) -> void:
 	# Try loading dedicated asset if exists (e.g. assets/models/villagers/MabbTruet.glb or assets/models/mabb_truet.glb)
@@ -148,3 +172,55 @@ func turn_to_face(target_pos: Vector3) -> void:
 func reset_facing() -> void:
 	if facing != Vector2i.ZERO:
 		model.rotation.y = atan2(float(facing.x), float(facing.y))
+
+static func get_outline_material() -> StandardMaterial3D:
+	if _outline_material == null:
+		_outline_material = StandardMaterial3D.new()
+		_outline_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_outline_material.albedo_color = Color("fff6e4")
+		_outline_material.cull_mode = BaseMaterial3D.CULL_FRONT
+		_outline_material.grow = true
+		_outline_material.grow_amount = 0.02
+	return _outline_material
+
+func set_highlighted(enabled: bool) -> void:
+	if is_highlighted == enabled:
+		return
+	is_highlighted = enabled
+	var mat: Material = get_outline_material() if enabled else null
+	_apply_material_overlay(self, mat)
+
+func _apply_material_overlay(node: Node, mat: Material) -> void:
+	if node is MeshInstance3D:
+		node.material_overlay = mat
+	for child in node.get_children():
+		if child is Area3D:
+			continue
+		_apply_material_overlay(child, mat)
+
+func get_entity_tile() -> Vector2i:
+	return home_tile
+
+func get_primary_action() -> Dictionary:
+	return {
+		"action": "talk",
+		"tile": home_tile,
+		"text": "Talk-to " + display_name
+	}
+
+func get_context_options(callbacks: Dictionary) -> Array[Dictionary]:
+	var options: Array[Dictionary] = [
+		{
+			"text": "Talk-to " + display_name,
+			"callback": callbacks.get("talk", Callable())
+		},
+		{
+			"text": "Examine",
+			"callback": callbacks.get("examine", Callable())
+		},
+		{
+			"text": "Cancel",
+			"callback": Callable()
+		}
+	]
+	return options
