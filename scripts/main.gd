@@ -228,16 +228,20 @@ func toggle_grid() -> void:
 	if is_instance_valid(hud.grid_button):
 		hud.grid_button.text = "G  Grid on" if grid_visible else "G  Grid"
 
+var _rmb_press_pos := Vector2.ZERO
+var _rmb_press_target: Dictionary = {}
+var _rmb_drag_exceeded := false
+
 func _unhandled_input(event: InputEvent) -> void:
 	if hud.is_dialogue_open():
 		return
-	if event is InputEventMouseButton and event.pressed:
-		hud.hide_context_menu()
-		var pick = pick_object_or_ground(event.position)
-		var ent: Node = pick.get("entity", null)
-		var clicked_tile: Vector2i = pick.get("tile", Vector2i(999, 999))
 
-		if event.button_index == MOUSE_BUTTON_LEFT:
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			hud.hide_context_menu()
+			var pick = pick_object_or_ground(event.position)
+			var ent: Node = pick.get("entity", null)
+			var clicked_tile: Vector2i = pick.get("tile", Vector2i(999, 999))
 			_cancel_pending_interaction()
 			player.stop_chopping()
 			# R4: Left-click on interactive object performs its primary action
@@ -255,7 +259,26 @@ func _unhandled_input(event: InputEvent) -> void:
 			else:
 				travel_to(clicked_tile)
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
-			_handle_right_click(event.position, ent, clicked_tile)
+			if event.pressed:
+				hud.hide_context_menu()
+				_rmb_press_pos = event.position
+				_rmb_press_target = pick_object_or_ground(event.position)
+				_rmb_drag_exceeded = false
+			else:
+				# R8: Right-click opens menu on release, not on press
+				# Check if drag exceeded 6 px (matching camera.DRAG_THRESHOLD)
+				var dist = event.position.distance_to(_rmb_press_pos)
+				var camera_dragged = camera.rmb_dragged if is_instance_valid(camera) else false
+				if not _rmb_drag_exceeded and not camera_dragged and dist < camera.DRAG_THRESHOLD:
+					var ent: Node = _rmb_press_target.get("entity", null)
+					var tile: Vector2i = _rmb_press_target.get("tile", Vector2i(999, 999))
+					_handle_right_click(_rmb_press_pos, ent, tile)
+				_rmb_press_target.clear()
+
+	elif event is InputEventMouseMotion:
+		if is_instance_valid(camera) and camera.orbiting:
+			if event.position.distance_to(_rmb_press_pos) >= camera.DRAG_THRESHOLD:
+				_rmb_drag_exceeded = true
 
 func _handle_right_click(screen_pos: Vector2, arg1: Variant, arg2: Variant = null) -> void:
 	var ent: Node = null

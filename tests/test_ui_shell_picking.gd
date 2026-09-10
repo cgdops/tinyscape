@@ -103,6 +103,44 @@ func run() -> void:
 	var prim_action = npc.get_primary_action()
 	_assert(prim_action.get("action") == "talk", "NPC primary action is talk")
 
+	# R8: Right-click menu opens on release, not on press
+	# Press without release must not open menu
+	var cur_mabb_screen = camera.unproject_position(world.tile_to_world(Vector2i(21, 2)) + Vector3(0, 0.9, 0))
+	var rmb_press = InputEventMouseButton.new()
+	rmb_press.button_index = MOUSE_BUTTON_RIGHT
+	rmb_press.position = cur_mabb_screen
+	rmb_press.global_position = cur_mabb_screen
+	rmb_press.pressed = true
+	scene._unhandled_input(rmb_press)
+	_assert(not hud.context_menu.visible, "Context menu does not open on right press")
+
+	# Release without drag (< 6px) opens menu
+	var rmb_release = InputEventMouseButton.new()
+	rmb_release.button_index = MOUSE_BUTTON_RIGHT
+	rmb_release.position = cur_mabb_screen + Vector2(2, 2)
+	rmb_release.global_position = cur_mabb_screen + Vector2(2, 2)
+	rmb_release.pressed = false
+	scene._unhandled_input(rmb_release)
+	_assert(hud.context_menu.visible, "Context menu opens on right release within 6px threshold")
+	hud.hide_context_menu()
+
+	# Drag >= 6px suppresses menu on release
+	scene._unhandled_input(rmb_press)
+	var drag_ev = InputEventMouseMotion.new()
+	drag_ev.position = mabb_screen + Vector2(10, 10)
+	drag_ev.global_position = mabb_screen + Vector2(10, 10)
+	drag_ev.relative = Vector2(10, 10)
+	drag_ev.button_mask = MOUSE_BUTTON_MASK_RIGHT
+	camera._unhandled_input(drag_ev)
+	scene._unhandled_input(drag_ev)
+	var rmb_release_drag = InputEventMouseButton.new()
+	rmb_release_drag.button_index = MOUSE_BUTTON_RIGHT
+	rmb_release_drag.position = mabb_screen # even if returned to start pos
+	rmb_release_drag.global_position = mabb_screen
+	rmb_release_drag.pressed = false
+	scene._unhandled_input(rmb_release_drag)
+	_assert(not hud.context_menu.visible, "Context menu suppressed if cursor dragged >= 6px before release")
+
 	print("\nTEST SUMMARY: %d checks passed, %d failures" % [_checks, _failures])
 	scene.queue_free()
 	await process_frame
