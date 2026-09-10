@@ -73,6 +73,7 @@ corrected to match, not the other way round.
 | Terracotta shade | `#8f4836` | `#b46e52` | `roof_dark` | Roof planes turned from the key light |
 | Pond teal | `#579b9f` | `#79d0b2` | `water` | Water — green-leaning, calm |
 | Brass | `#d4b16d` | `#d4b16d` | `brass` | Fittings, small metal, UI edging |
+| **Highlight** | `#fff6e4` | — | — | **New.** Hover outlines and selection. A warm near-white — never pure `#ffffff`, which reads clinical against this palette |
 | Iron | `#414c46` | — | `iron` | Tool heads, hinges, nails |
 | Canvas | `#e9d5a5` | — | `canvas` | Awnings, sacking, tent cloth |
 
@@ -184,8 +185,29 @@ afternoon.
 ## 7. UI — `approved`
 
 Dark timber-green panels (`#415247`) with fine brass edging and warm off-white text. Large serif for
-place names and the wordmark; quiet sans-serif for controls. Panels sit in the corners; the centre
-of the screen stays clear.
+place names; quiet sans-serif for controls. **Panels sit in the corners and the centre of the screen
+stays clear** — the diorama is the thing worth looking at.
+
+**Corner assignments**, so windows stop competing for the same space
+([design/ui-shell.md](design/ui-shell.md)):
+
+| Corner | Holds |
+| --- | --- |
+| Top left | **Empty.** No wordmark, no logo — those belong to a title screen |
+| Top right | Minimap and place name |
+| Bottom left | The message log — a scrolling history of what the player has done |
+| Bottom right | The menu bar, and whichever window it has opened above it |
+| Centre | Nothing, except the dialogue box, which sits low and is dismissable |
+
+**Only one window is open at a time.** Bag, journal and settings are mutually exclusive.
+
+**Hover and selection are outlined, not tinted** — `Highlight` `#fff6e4`, a thin line, no fill, no
+pulse. This applies equally to a tree in the world and a slot in the bag, so the player learns one
+visual language for "this is what you are pointing at". The travel destination marker is the only
+thing in the game that pulses, and it keeps that to itself.
+
+**Item icons are renders of the item's own model**, not hand-drawn art, so an object and its icon can
+never drift apart. The only 2D art in the game is UI furniture: menu glyphs and panel edging.
 
 ## 7b. NPCs and the chathead — `approved`
 

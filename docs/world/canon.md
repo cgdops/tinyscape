@@ -43,9 +43,13 @@ user's sign-off) · `implemented` (exists in the build).
 ## Systems
 
 - [dialogue-system.md](../design/dialogue-system.md) — NPCs, the OSRS-style dialogue box, chatheads,
-  the dialogue data format. Status: `approved`, commissioned.
+  the dialogue data format. Status: `approved`, `implemented`.
 - [quest-system.md](../design/quest-system.md) — flags, quest states, the journal. Status:
-  `approved`, commissioned.
+  `approved`, `implemented`.
+- [object-picking.md](../design/object-picking.md) — mesh-accurate picking and the hover outline.
+  Status: `approved`, commissioned.
+- [ui-shell.md](../design/ui-shell.md) — menu bar, 28-slot bag, message log, item icons rendered
+  from item models. Status: `approved`, commissioned.
 - **Firemaking** — considered as the second skill and **shelved**. Burning logs is only meaningful
   once Cooking consumes the fire, and Cooking is not designed. Do not build it as a log sink.
 
@@ -66,3 +70,6 @@ user's sign-off) · `implemented` (exists in the build).
 - 2026-09-10 — Art bible palette rebuilt as **albedo values** after it blocked modelling twice. The
   previous table was screenshot-sampled lit colour, which is not what a modeller assigns. Character
   colours recorded for the first time, including four new entries for weathered skin and grey hair.
+- 2026-09-10 — Dialogue, quest state and Mabb shipped. First playtest of the talking build produced
+  six UI and interaction requests; picking and the UI shell commissioned in response. `Highlight`
+  `#fff6e4` added to the palette and corner assignments written into the art direction.

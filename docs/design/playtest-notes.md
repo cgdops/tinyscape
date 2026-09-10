@@ -56,3 +56,24 @@ build's material values are the ground truth; the bible is a record of them, not
 **The near miss:** the earlier entry above says the palette was corrected. It was not — only the
 stump was. A note that records an intention as though it were an outcome is worse than no note, and
 this one cost a second round trip.
+
+---
+
+## 2026-09-10 — Dialogue and NPCs, first session
+
+Dialogue, quest state and Mabb's model all merged. The user's verdict on the NPC and dialogue work
+was that it reads well; all feedback below is about the surface around it.
+
+| Observation | Kind | Outcome |
+| --- | --- | --- |
+| Must right-click the tree's *base tile* to chop, not the tree itself | design | Root cause: all picking is a ground-plane raycast (`main.gd:146`) and nothing above the plane is pickable. Now fixable cheaply because the world refactor turned trees into real entities. Spec: [object-picking.md](object-picking.md) R1-R4 |
+| Hovered objects should show a white border | design | [object-picking.md](object-picking.md) R5. Inverted-hull outline in a new palette entry, `Highlight` `#fff6e4` — warm, not pure white. The green tile tint over trees is dropped; one thing highlighted one way |
+| Wants a visual 28-slot bag and a menu bar (journal, bag, settings) | design | [ui-shell.md](ui-shell.md) R2-R3. 4 x 7 grid, bottom right, mutually exclusive windows |
+| Remove the logo from the top left | design | [ui-shell.md](ui-shell.md) R1. Wordmark belongs on a title screen. Corner assignments now written into [art-direction.md](../art-direction.md) §7 so the corner stays empty |
+| The bottom-left box should be a running log of actions, and examine text should go there instead of screen centre | design | [ui-shell.md](ui-shell.md) R4. 100 lines, scrollback, repeats collapsed to a multiplier. The centre hint line is removed outright; continuous walk/chop status stays in the left panel so the log does not fill with noise |
+| Item icons should be the item's own 3D model | design | [ui-shell.md](ui-shell.md) R5 and §4. Rendered once per item type into a cached texture, the same trick as the dialogue chathead — so the model stays the single source of truth and no PNG is re-exported when it changes. Asset specialist owns the `IconAnchor` pose convention |
+
+All six were scope calls rather than bugs, so all six are written up rather than tweaked. No tuning
+feedback on chop pacing, trip length or the new XP curve yet — the curve has still not been played
+at its corrected magnitude.
+
