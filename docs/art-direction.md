@@ -145,8 +145,10 @@ No assets have been built to this section yet.
 
 ## 9. Open
 
-- **Character scale in frame.** The adventurer reads small and generic at default camera distance
-  compared to the props around them. Worth deciding whether the character gets chunkier proportions
-  or the default camera comes in closer — a design question, not an asset bug.
+- **Character scale in frame.** ~~The adventurer reads small at default camera distance.~~
+  Resolved as a camera question: see [design/camera-zoom.md](design/camera-zoom.md). The player
+  will be able to zoom close at will, so the character's proportions stay as they are. This does
+  mean the adventurer will be seen at close range — re-check facet density and silhouette against
+  §3 once that lands.
 - No direction set yet for: architecture beyond the cottage, NPC visual variation, terrain and
   foliage variety beyond the two tree archetypes, item icons, or anything in the Longwood.

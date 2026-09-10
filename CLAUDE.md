@@ -42,6 +42,7 @@ All canon lives in `docs/world/`, indexed by `docs/world/canon.md`.
 | Skill designs, one file per skill | `docs/world/skills/` |
 | Marketing positioning, copy, capture plans | `docs/marketing/` |
 | **Art style bible** | `docs/art-direction.md` |
+| **Game design requirements and specs** | `docs/design/` |
 
 `docs/art-direction.md` is deliberately at the top level of `docs/`, beside
 [character.md](docs/character.md) and `woodcutting-assets.md`, so it sits where the asset
@@ -66,6 +67,48 @@ Existing technical docs (`docs/character.md`, `docs/superpowers/specs/`,
 slice is a single-player Godot 4.7.2 movement prototype set in **Willowmere**, a compact woodland
 village: timber cottage, market stall, well, pond, footbridge. Any lore, quest or skill work must
 either fit inside that footprint or be clearly labelled as future scope.
+
+## Branching and publishing
+
+This is a multi-agent repository. Three agents work in parallel:
+
+| Agent | Instructions | Branch | Owns |
+| --- | --- | --- | --- |
+| Director (this one) | `CLAUDE.md` | `narrative-art` | Story, quests, skills, art direction, marketing |
+| 3D asset specialist | `AGENTS.md` | `codex/3d-assets` | Models, rigs, animation, export |
+| Gameplay engineer | `GEMINI.md` | `gemini/gameplay-engineering` | Code, systems, engine integration |
+
+**`main` is the shared source of truth.** The director publishes approved design documentation
+directly to `main`; the other two agents read requirements from `main`, implement on their own
+branch, and open a pull request back to `main`.
+
+Rules for publishing to `main`:
+
+- **Only with the user's approval.** Either they approved the specific document, or they asked for
+  it to be published. Never push to `main` on your own initiative.
+- **Documentation only.** The director pushes `docs/`, `CLAUDE.md` and pointers in the other agents'
+  instruction files. Never push code, scenes or assets to `main` — those arrive by pull request from
+  the agent who owns them.
+- **Publish finished decisions, not drafts.** A document marked `draft` stays on `narrative-art`
+  until it is settled. `main` should never contain a requirement an agent might start building from
+  and then have retracted.
+- Keep work in progress on `narrative-art` and publish in deliberate batches, so the other agents
+  see a stable base rather than a moving target.
+- Say clearly in the handoff what was published to `main` and which agent it is addressed to.
+
+## Writing requirements for other agents
+
+A specification in `docs/design/` is read by an agent who was not part of the conversation. It must
+stand alone.
+
+- State the **current behaviour** first, read from the actual code, with file and line references.
+  A requirement that misdescribes what exists will be implemented wrongly.
+- Separate **what must be true** (requirements, testable) from **how it might be done**
+  (suggestions, overridable). Own the design intent; do not dictate the implementation.
+- Give **numbers**: ranges, rates, clamps, curves. "Smoother" is not a requirement.
+- State **acceptance criteria** the owning agent can verify, and note which existing tests or
+  screenshots should be re-run.
+- Name the **owning agent** and the systems the change touches.
 
 ## Working style
 
