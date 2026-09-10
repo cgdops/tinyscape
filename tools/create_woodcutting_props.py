@@ -37,12 +37,12 @@ def palette(name, value):
     return material(name, [int(value[i:i+2], 16) / 255 for i in (0, 2, 4)], True)
 
 
-walnut = palette('Walnut #976a4d', '976a4d')
-walnut_dark = palette('Walnut dark #89543c', '89543c')
-meadow = palette('Meadow #adc56f', 'adc56f')
-meadow_shade = palette('Meadow shade #9fb266', '9fb266')
-canopy = palette('Canopy #849552', '849552')
-sage = palette('Sage void #a7bdaa', 'a7bdaa')
+walnut = palette('Walnut #573f2e', '573f2e')
+walnut_dark = palette('Walnut dark #3a3026', '3a3026')
+meadow = palette('Canopy light #8d9c55', '8d9c55')
+meadow_shade = palette('Reed #91965b', '91965b')
+canopy = palette('Canopy #758747', '758747')
+sage = palette('Sage void #8eaa9c', '8eaa9c')
 # Exact linear values from tools/create_woodcutting_assets.py, not new colours.
 honey = material('Axe - honey oak', (.46, .245, .075))
 honey_light = material('Axe - oak facets', (.55, .32, .11))

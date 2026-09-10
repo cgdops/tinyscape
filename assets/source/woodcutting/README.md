@@ -29,8 +29,8 @@ only; it is not baked into exports or the editable source.
 ## Art and use
 
 - Willow: low umbrella crown with seven hanging, broad faceted lobes, a short
-  branching trunk, and no stacked oak balls or pine cones. Existing Meadow,
-  Meadow shade and Canopy supply the lighter yellow-green foliage; Walnut and
+  branching trunk, and no stacked oak balls or pine cones. Existing Canopy light,
+  Reed and Canopy supply the lighter yellow-green foliage; Walnut and
   Walnut dark supply the trunk. Base trunk radius is 0.32 m.
 - Log: eight-sided bark with bevelled honey cut ends. Bark uses the bible's
   Walnut pair. End grain uses the exact linear RGB values of the existing axe's
@@ -63,18 +63,17 @@ Regenerate only these outputs (overwrites any manual edits to them):
 
 ## Pending work / owner handoff
 
-- **A2 stumps are held for a palette decision.** A2 requires matching existing
-  trunks in colour, but `scripts/world.gd` uses `wood = #573f2e` while the art bible
-  specifies Walnut `#976a4d`. The question sent to the user is whether to use the
-  bible and request an engineer change to those trunks, or preserve the existing
-  trunk colour as an explicit exception. No palette exception has been assumed.
-  Existing interactive oak and pine base radii are 0.28 and 0.23 m respectively;
-  radial segments are eight. Willow's base radius is 0.32 m.
+- **A2 stumps delivered:** `WillowStump.glb`, `OakStump.glb`, `PineStump.glb`;
+  editable source `stumps.blend`. See `../villagers/README.md` and its verification
+  report. The corrected main art bible now approves Walnut albedo `#573f2e` and
+  Walnut dark `#3a3026`. This pass also reauthors willow/log bark to those values
+  and willow foliage to approved albedos, preserving geometry and export names.
+  Existing interactive oak and pine base radii are 0.28 and 0.23 m; willow is
+  0.32 m. All stumps have eight radial segments and Walnut light cut surfaces.
 - Gameplay engineer: place the willow, replace the yard pile and switch between
   its two exports on deposit, using the approved skill requirements. These assets
   have no collision, interaction, inventory or respawn behaviour attached.
-- Director: resolve the old trunk material versus the published Walnut palette
-  once the user selects the intended path. This pass does not edit director docs.
+- The palette blocker is resolved by main `ed925e8`; no director decision remains.
 - A5 optional falling/shaking feedback is deferred: it needs animation and an
   engine trigger beyond this static asset pass. Existing axe and chop clips are
   preserved.
