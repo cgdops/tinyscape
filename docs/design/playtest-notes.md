@@ -77,3 +77,14 @@ All six were scope calls rather than bugs, so all six are written up rather than
 feedback on chop pacing, trip length or the new XP curve yet — the curve has still not been played
 at its corrected magnitude.
 
+---
+
+## 2026-09-10 — Right-drag opens context menus
+
+| Observation | Kind | Outcome |
+| --- | --- | --- |
+| Right-dragging to pan the camera opens a tree's context menu | bug | Right-click and right-drag both fire from the same button press (`main.gd:189`), so the menu opens before the game can know a drag was intended. Fix: menu opens on release, only under 6 px of travel. Spec: [object-picking.md](object-picking.md) R8 |
+
+`camera.gd` already tracks drag distance at a 5 px threshold for its own purposes and nothing reads
+it. The spec requires one shared threshold rather than a second copy, or the two will drift.
+

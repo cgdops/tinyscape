@@ -104,6 +104,35 @@ Keep `_hover_marker`, but it now only marks **walkable and blocked ground**: gol
 for blocked, exactly as today. Drop the green tree tint — trees are outlined now, and highlighting
 the same thing twice in two visual languages is worse than either alone.
 
+### R8 — Right-click opens the menu on release, not on press
+
+Right-drag orbits the camera and right-click opens the context menu, and today both fire from the
+same press. `main.gd:189` calls `_handle_right_click()` on `event.pressed`, before any motion has
+happened, so panning the camera opens a menu on whatever was under the cursor when the drag started.
+
+**The menu opens on right-button _release_, and only if the press was not a drag.**
+
+| Value | Number |
+| --- | --- |
+| Drag threshold | **6 px** of cursor travel since the press |
+| Time threshold | none — a long hold that never moves is still a click |
+
+- On right press: record the position, start orbiting as now, **do not** build a menu.
+- On right release: if total travel since press is under the threshold, open the menu at the press
+  position, using the object picked at the **press** position — not the release position, so a
+  one-pixel wobble cannot retarget the menu.
+- Once travel exceeds the threshold, the press is a drag for good. Returning the cursor to where it
+  started before releasing does not make it a click again.
+- Suppress the menu if the window loses focus mid-drag, matching `camera.gd:100`.
+
+`camera.gd` already has `_rmb_down_pos` and `_rmb_dragged` at a 5 px threshold. Either lift that
+state somewhere both can read, or have the camera report it. **Do not add a second, separate
+drag-detection with a different threshold** — one number, one place, or these two behaviours will
+drift apart again.
+
+Left-click keeps acting on press. Only the right button waits for release, because only the right
+button is overloaded.
+
 ### R7 — Suppression
 
 No highlight and no picking while the camera is orbiting or a dialogue is open — the same conditions
@@ -123,6 +152,10 @@ No highlight and no picking while the camera is orbiting or a dialogue is open �
 7. No outline appears while orbiting or while a dialogue box is open.
 8. Adding a new interactive entity requires no edit to `_handle_right_click()`.
 9. Existing pathfinding, tile blocking, walk-then-act and chop interruption are unchanged.
+10. Right-dragging to orbit the camera never opens a context menu, over a tree or anywhere else.
+11. A right-click that does not move still opens the menu, however long it is held.
+12. The menu targets whatever was under the cursor when the button went down.
+13. Dragging past the threshold and returning to the start before release opens no menu.
 
 ## 4. Verification
 
