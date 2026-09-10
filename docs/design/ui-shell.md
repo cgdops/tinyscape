@@ -1,6 +1,6 @@
 # System Design — UI Shell: Menu Bar, Bag, and the Message Log
 
-**Status:** `approved` · **Owning agents:** gameplay engineer (`GEMINI.md`), with §5 addressed to the
+**Status:** `approved` · **Owning agents:** gameplay engineer (`GEMINI.md`), with §4 addressed to the
 3D asset specialist (`AGENTS.md`) · **Source:** playtest feedback, 2026-09-10
 ([playtest-notes.md](playtest-notes.md))
 
@@ -123,7 +123,7 @@ changes with it and nobody re-exports a PNG.
 - Render target **128 × 128**, transparent background.
 - Lit by the scene's warm key so an icon and the item on the ground are recognisably the same
   object.
-- Framed from the item's **icon pose** (§5), filling ~85% of the square.
+- Framed from the item's **icon pose** (§4 A1), filling ~85% of the square.
 - Icons are cached for the session. They do not need to persist.
 
 ### R6 — Preserve what works

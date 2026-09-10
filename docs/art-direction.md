@@ -275,5 +275,12 @@ No assets have been built to this section yet.
   will be able to zoom close at will, so the character's proportions stay as they are. This does
   mean the adventurer will be seen at close range — re-check facet density and silhouette against
   §3 once that lands.
-- No direction set yet for: architecture beyond the cottage, NPC visual variation, terrain and
-  foliage variety beyond the two tree archetypes, item icons, or anything in the Longwood.
+- **Item icons.** ~~No direction set.~~ Resolved: icons are rendered from the item's own 3D model
+  rather than drawn, framed from an `IconAnchor` pose the asset specialist authors into each item
+  GLB. See [design/ui-shell.md](design/ui-shell.md) R5 and §4, and §7 above for why no hand-drawn
+  item art exists in this game.
+- No direction set yet for: architecture beyond the cottage, terrain and foliage variety beyond the
+  three tree archetypes, or anything in the Longwood.
+- **NPC visual variation** is partly covered — §7b sets proportions, register, palette and the rig
+  contract for a single villager, but says nothing about how a cast of six differs from each other.
+  That direction is due before a second and third villager are commissioned.
