@@ -78,10 +78,10 @@ about 1.10× per level, which is the shape RuneScape uses and the reason early l
 
 | Level | Total XP | Level | Total XP |
 | --- | --- | --- | --- |
-| 1 | 0 | 11 | 1 250 |
-| 2 | 85 | 12 | 1 520 |
-| 3 | 180 | 13 | 1 840 |
-| 4 | 290 | 14 | 2 220 |
+| 1 | 0 | 11 | 1 625 |
+| 2 | 85 | 12 | 1 870 |
+| 3 | 180 | 13 | 2 125 |
+| 4 | 290 | 14 | 2 390 |
 | 5 | 415 | 15 | 2 670 |
 | 6 | 560 | 16 | 3 200 |
 | 7 | 725 | 17 | 3 830 |
@@ -89,19 +89,37 @@ about 1.10× per level, which is the shape RuneScape uses and the reason early l
 | 9 | 1 135 | 19 | 5 440 |
 | 10 | 1 390 | 20 | 6 460 |
 
-> **Open — the curve is not monotonic and needs your call (raised 2026-09-10).** Level 10 is
-> 1 390 XP and level 11 is 1 250. The two-column table was authored wrong and
-> `scripts/woodcutting_data.gd:19` faithfully implements the error, so a player currently
-> de-levels crossing 10. The shape stated above (~1.10× per level, and accelerating) and the
-> level-15 target of 2 670 XP cannot both hold: continuing the L1–L10 curve puts level 15 nearer
-> **3 385 XP**, about two hours rather than ninety minutes. Either the pine gate moves later or
-> levels 11–15 flatten. **Not fixed here** — it changes approved pacing.
+**Levels 11-15 are deliberately flattened** (per-level steps of 235, 245, 255, 265, 280 against the
+255 that preceded them) so that level 15 lands on 2 670 exactly, as approved. The curve resumes its
+intended acceleration at 16, where the step jumps to 530. That discontinuity sits immediately *after*
+the pine gate, which is the right place for it: the run-up to pine stays predictable, and levels past
+it slow down again.
 
-**Pacing assumption:** at 25 XP per oak log and one log per 1.8 s (plus walking and unloading, call
-it an effective 3 s per log), level 15 is roughly **90 minutes** of steady cutting. That is the
-intended feel — a real but not punishing wall in front of pine. **These numbers are tuning
-parameters. Implement them as a data table, not as constants scattered through the code**, so they
-can be changed without touching logic.
+> **Fixed 2026-09-10 — the curve was not monotonic.** Level 10 was 1 390 XP and level 11 was
+> 1 250, so a player de-levelled crossing 10. The two-column table was authored wrong and
+> `scripts/woodcutting_data.gd:19` implements the error faithfully. Levels 11-15 are now flattened
+> to reach 2 670 at level 15 as approved. **Gameplay engineer: `XP_TABLE` needs syncing to the
+> table above.** See the pacing warning below — the magnitude of the whole curve is a separate,
+> still-open question.
+
+**Pacing intent: level 15 should be about 90 minutes of steady cutting** — a real but not punishing
+wall in front of pine.
+
+> **Open — the curve does not deliver that, by roughly an order of magnitude (raised 2026-09-10).**
+> Oak gives 25 XP per log and yields one log per 1.8 s chop
+> ([woodcutting_data.gd:42](../../scripts/woodcutting_data.gd)). 2 670 XP is therefore **107 oak
+> logs — 192 seconds of swinging.** Allowing for walking between trees, respawns and a deposit trip
+> every 28 logs, an effective 3.7 s per log puts level 15 at **six to eight minutes**, not ninety.
+> The original 90-minute figure was never checked against the tier table.
+>
+> Closing the gap means scaling the whole curve up about **tenfold** — level 15 at 26 700 XP is
+> ~1 070 oak logs, or **65-70 minutes**. The alternative, cutting per-log XP to a tenth, is worse:
+> small numbers going up feel miserly, and the tier values are good as they are.
+>
+> **Not applied.** Multiplying an approved curve by ten is a pacing change, not a bug fix.
+
+**These numbers are tuning parameters. Implement them as a data table, not as constants scattered
+through the code**, so they can be changed without touching logic.
 
 ### R4 — Felling takes more than one chop
 

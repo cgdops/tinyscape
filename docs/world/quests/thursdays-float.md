@@ -167,7 +167,7 @@ Falls back to `menu`.
 | Reward | Amount | Why |
 | --- | --- | --- |
 | Coins | 150 | Against 80 for selling the same logs at the pile. The quest is worth doing, and 150 is a meaningful fraction of a first weapon whenever one exists |
-| Woodcutting XP | 250 | Roughly ten oak logs, about level 4 from a standing start. It should feel like a shortcut, not a skip |
+| Woodcutting XP | 250 | Ten oak logs' worth — level 3 from a standing start. It should feel like a shortcut, not a skip. **If the XP curve is scaled up ([woodcutting-skill.md](../../design/woodcutting-skill.md) §3), scale this with it** so the reward keeps the same meaning |
 | Flag `mabb_trusts_you` | true | Not spent by anything yet. It is the hook the shop and the next quest read |
 | World state | None | Nothing in the scene changes |
 
