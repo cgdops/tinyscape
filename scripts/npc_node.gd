@@ -33,15 +33,29 @@ func initialize(
 	reset_facing()
 
 func _build_model(materials: Dictionary) -> void:
-	# Try loading dedicated asset if exists (e.g. assets/models/mabb_truet.glb)
-	var custom_path = "res://assets/models/%s.glb" % id
-	if ResourceLoader.exists(custom_path):
-		var scene = load(custom_path) as PackedScene
-		if scene:
-			model = scene.instantiate()
-			add_child(model)
-			head_target = model.find_child("Head", true, false)
-			return
+	# Try loading dedicated asset if exists (e.g. assets/models/villagers/MabbTruet.glb or assets/models/mabb_truet.glb)
+	var candidate_paths = [
+		"res://assets/models/villagers/MabbTruet.glb" if id == "mabb_truet" else "",
+		"res://assets/models/%s.glb" % id,
+		"res://assets/models/villagers/%s.glb" % id
+	]
+	for custom_path in candidate_paths:
+		if not custom_path.is_empty() and ResourceLoader.exists(custom_path):
+			var scene = load(custom_path) as PackedScene
+			if scene:
+				model = scene.instantiate()
+				model.name = "Model"
+				add_child(model)
+				head_target = model.find_child("Head", true, false)
+				var anim_player: AnimationPlayer = model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+				if anim_player:
+					for anim_name in anim_player.get_animation_list():
+						var anim = anim_player.get_animation(anim_name)
+						if anim:
+							anim.loop_mode = Animation.LOOP_LINEAR
+					if anim_player.has_animation("Idle"):
+						anim_player.play("Idle")
+				return
 
 	# Stylized fallback model matching art-direction specs:
 	# Height ~1.70m, broad planted silhouette, sleeveless overtunic (Canopy shadow),

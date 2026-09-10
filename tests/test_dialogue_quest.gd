@@ -48,7 +48,7 @@ func run() -> void:
 	gs.set_flag("mabb_first_meeting", true)
 	_assert(gs.get_flag("mabb_first_meeting") == true, "Flag set persists")
 
-	# 2. Verify World NPC placement
+	# 2. Verify World NPC placement & 3D Assets
 	var world = World.new()
 	world.build()
 	_assert(world.is_npc_at(Vector2i(21, 2)), "Mabb Truet present at (21, 2)")
@@ -56,6 +56,10 @@ func run() -> void:
 	var npc = world.get_npc_at(Vector2i(21, 2))
 	_assert(npc != null and npc.id == "mabb_truet", "NPC id matches mabb_truet")
 	_assert(npc.facing == Vector2i(1, -1), "Mabb initial rest facing is (1, -1)")
+	var anim_player = npc.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	_assert(anim_player != null and anim_player.has_animation("Idle") and anim_player.has_animation("Talk"), "Mabb Truet GLB model loaded with Idle and Talk animations")
+	var axe = world.find_child("MabbFellingAxe", true, false)
+	_assert(axe != null, "MabbFellingAxe placed beside log pile in lumber clearing")
 
 	# 3. Verify Player and DialogueRunner condition evaluation
 	var player = Player.new()

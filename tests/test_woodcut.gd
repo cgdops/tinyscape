@@ -64,6 +64,7 @@ func run() -> void:
 	var oak_data = world.get_tree_data(test_tree_tile)
 	assert(oak_data["is_stump"] == true, "Oak must be marked as stump")
 	assert(oak_data["stump"].visible == true, "Stump visual must be visible")
+	assert(oak_data["stump"].find_child("StumpMesh", true, false) != null, "Oak stump GLB mesh is instantiated")
 	assert(oak_data["canopy"].visible == false, "Oak canopy must be hidden")
 
 	# 6. Verify respawn logic

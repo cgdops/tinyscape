@@ -14,6 +14,7 @@ var current_node: Dictionary = {}
 var say_sub_index: int = 0
 var open_time: float = 0.0
 var active_speaker: String = ""
+var has_animated_chathead: bool = false
 
 # UI nodes
 var chathead_viewport: SubViewport
@@ -197,6 +198,49 @@ func _update_chathead_visuals(speaker: String) -> void:
 	for child in chathead_pivot.get_children():
 		child.queue_free()
 
+	has_animated_chathead = false
+
+	if speaker != "player":
+		# Mabb Truet 3D Model with Talk animation
+		var mabb_path = "res://assets/models/villagers/MabbTruet.glb"
+		if ResourceLoader.exists(mabb_path):
+			var mabb_scene = load(mabb_path) as PackedScene
+			if mabb_scene:
+				var mabb_inst = mabb_scene.instantiate()
+				mabb_inst.name = "MabbChathead"
+				# Head rest is at (0, 1.365, 0). Offset model down so skull is centered at pivot
+				mabb_inst.position = Vector3(0.0, -1.365, 0.0)
+				chathead_pivot.add_child(mabb_inst)
+				chathead_pivot.rotation_degrees = Vector3(4, 15, 0)
+
+				var anim_player: AnimationPlayer = mabb_inst.find_child("AnimationPlayer", true, false) as AnimationPlayer
+				if anim_player:
+					for anim_name in anim_player.get_animation_list():
+						var anim = anim_player.get_animation(anim_name)
+						if anim:
+							anim.loop_mode = Animation.LOOP_LINEAR
+					if anim_player.has_animation("Talk"):
+						anim_player.play("Talk")
+						has_animated_chathead = true
+					elif anim_player.has_animation("Idle"):
+						anim_player.play("Idle")
+				return
+
+	# Player adventurer model or procedural fallback
+	if speaker == "player":
+		var player_path = "res://assets/models/adventurer.glb"
+		if ResourceLoader.exists(player_path):
+			var player_scene = load(player_path) as PackedScene
+			if player_scene:
+				var player_inst = player_scene.instantiate()
+				player_inst.name = "PlayerChathead"
+				# Player head is at ~1.54m
+				player_inst.position = Vector3(0.0, -1.54, 0.0)
+				chathead_pivot.add_child(player_inst)
+				chathead_pivot.rotation_degrees = Vector3(4, 15, 0)
+				return
+
+	# Fallback box heads
 	var head_mesh = MeshInstance3D.new()
 	var box = BoxMesh.new()
 	box.size = Vector3(0.28, 0.32, 0.28)
@@ -268,7 +312,8 @@ func _process(delta: float) -> void:
 	continue_prompt.modulate.a = 0.6 + sin(open_time * 5.0) * 0.4
 
 	# Live chathead bobbing (±3° yaw and nod at ~0.6 Hz)
-	if is_instance_valid(chathead_pivot):
+	# Per art handoff: do not double procedural bobbing when animated Talk clip is running
+	if is_instance_valid(chathead_pivot) and not has_animated_chathead:
 		var bob = sin(open_time * TAU * 0.6)
 		chathead_pivot.rotation_degrees.x = 4.0 + bob * 2.5
 		chathead_pivot.rotation_degrees.y = 15.0 + cos(open_time * TAU * 0.6) * 3.0

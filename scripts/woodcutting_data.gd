@@ -10,7 +10,12 @@ const ASSETS: Dictionary = {
 	"willow_tree": "res://assets/models/woodcutting/WillowTree.glb",
 	"cut_log": "res://assets/models/woodcutting/CutLog.glb",
 	"logpile_empty": "res://assets/models/woodcutting/LogPileEmpty.glb",
-	"logpile_stacked": "res://assets/models/woodcutting/LogPileStacked.glb"
+	"logpile_stacked": "res://assets/models/woodcutting/LogPileStacked.glb",
+	"willow_stump": "res://assets/models/woodcutting/WillowStump.glb",
+	"oak_stump": "res://assets/models/woodcutting/OakStump.glb",
+	"pine_stump": "res://assets/models/woodcutting/PineStump.glb",
+	"mabb_truet": "res://assets/models/villagers/MabbTruet.glb",
+	"mabb_axe": "res://assets/models/villagers/MabbFellingAxe.glb"
 }
 
 # Authoritative harvestable tree spawn registry

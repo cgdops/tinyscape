@@ -458,6 +458,20 @@ func _forest() -> void:
 	logpile_empty_mesh = pile.empty_mesh
 	logpile_stacked_mesh = pile.stacked_mesh
 
+	# Mabb's felling axe beside the log pile (leaning prop, haft butt origin)
+	var axe_path = WoodcuttingData.ASSETS.get("mabb_axe", "res://assets/models/villagers/MabbFellingAxe.glb")
+	if ResourceLoader.exists(axe_path):
+		var axe_scene = load(axe_path) as PackedScene
+		if axe_scene:
+			var axe_pivot = Node3D.new()
+			axe_pivot.name = "MabbFellingAxe"
+			# Position beside the log pile (leaning toward the wood)
+			axe_pivot.position = tile_to_world(LOGPILE_TILE) + Vector3(-0.75, 0.0, 0.45)
+			axe_pivot.rotation_degrees = Vector3(12.0, 35.0, -18.0)
+			var axe_inst = axe_scene.instantiate()
+			axe_pivot.add_child(axe_inst)
+			add_child(axe_pivot)
+
 	# Spawn Mabb Truet (NPC) at (21, 2) facing (1, -1)
 	_create_npc(
 		"mabb_truet",
