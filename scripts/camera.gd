@@ -1,4 +1,4 @@
-﻿extends Camera3D
+extends Camera3D
 
 const MIN_ZOOM := 3.5
 const MAX_ZOOM := 40.0
@@ -90,8 +90,10 @@ func _process(delta: float) -> void:
 	position = _focus + Vector3(sin(yaw) * cos(pitch), sin(pitch), cos(yaw) * cos(pitch)) * 42.0
 	look_at(_focus)
 
-var _rmb_down_pos := Vector2.ZERO
-var _rmb_dragged := false
+const DRAG_THRESHOLD: float = 6.0
+
+var rmb_down_pos := Vector2.ZERO
+var rmb_dragged := false
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and not event.pressed:
@@ -100,14 +102,15 @@ func _input(event: InputEvent) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
 		orbiting = false
+		rmb_dragged = true # Suppress context menu if focus lost mid-press
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		match event.button_index:
 			MOUSE_BUTTON_RIGHT:
 				if event.pressed:
-					_rmb_down_pos = event.position
-					_rmb_dragged = false
+					rmb_down_pos = event.position
+					rmb_dragged = false
 					orbiting = true
 				else:
 					orbiting = false
@@ -122,8 +125,8 @@ func _unhandled_input(event: InputEvent) -> void:
 					zoom = clampf(zoom * ZOOM_FACTOR, MIN_ZOOM, MAX_ZOOM)
 					_is_close_preset = false
 	if event is InputEventMouseMotion and orbiting:
-		if event.position.distance_to(_rmb_down_pos) > 5.0:
-			_rmb_dragged = true
+		if event.position.distance_to(rmb_down_pos) >= DRAG_THRESHOLD:
+			rmb_dragged = true
 		yaw -= event.relative.x * 0.006
 		var min_p := min_pitch_for_size(size)
 		pitch = clampf(pitch + event.relative.y * 0.004, min_p, MAX_PITCH)

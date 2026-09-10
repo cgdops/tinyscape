@@ -9,6 +9,8 @@ const GameState = preload("res://scripts/game_state.gd")
 const DialogueRunner = preload("res://scripts/dialogue_runner.gd")
 const QuestData = preload("res://scripts/quest_data.gd")
 const NpcNode = preload("res://scripts/npc_node.gd")
+const TreeNode = preload("res://scripts/tree_node.gd")
+const LogPileNode = preload("res://scripts/log_pile_node.gd")
 
 var world: Node3D
 var navigation: RefCounted
@@ -19,6 +21,8 @@ var game_state: RefCounted
 var dialogue_runner: RefCounted
 var grid_visible := false
 var hovered_tile := Vector2i(999, 999)
+var hovered_entity: Node = null
+
 var _hover_marker: MeshInstance3D
 var _hover_material: StandardMaterial3D
 var _destination_marker: MeshInstance3D
@@ -41,14 +45,14 @@ func _ready() -> void:
 	player.initialize(world, world.SPAWN)
 	dialogue_runner = DialogueRunner.new()
 	dialogue_runner.initialize(game_state, player)
-	dialogue_runner.dialogue_message_emitted.connect(func(msg: String): hud.show_message(msg, 4.0))
+	dialogue_runner.dialogue_message_emitted.connect(func(msg: String): hud.show_message(msg))
 	game_state.quest_state_changed.connect(func(q_id: String, new_state: String, _old: String):
 		var q_info = QuestData.get_quest_info(q_id)
 		var q_title = q_info.get("display_name", q_id)
 		if new_state == "active":
-			hud.show_message("Quest started: %s" % q_title, 4.0)
+			hud.show_message("Quest started: %s" % q_title)
 		elif new_state == "complete":
-			hud.show_message("Quest complete: %s" % q_title, 4.0)
+			hud.show_message("Quest complete: %s" % q_title)
 	)
 	player.woodcut_progress.connect(func(_logs: int, _xp: int, _lvl: int, _msg: String):
 		if not game_state.get_flag("chopped_a_tree"):
@@ -113,45 +117,85 @@ func _setup_markers() -> void:
 	var quad := PlaneMesh.new()
 	quad.size = Vector2.ONE * world.TILE_SIZE * 0.94
 	_hover_marker.mesh = quad
-	_hover_material = _flat_material(Color(0.97, 0.9, 0.64, 0.32))
+	_hover_material = _flat_material(Color(0.97, 0.9, 0.64, 0.28))
 	_hover_marker.material_override = _hover_material
+	_hover_marker.position.y = 0.02
 	_hover_marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_hover_marker)
+
 	_destination_marker = MeshInstance3D.new()
-	var ring := TorusMesh.new()
-	ring.inner_radius = 0.35
-	ring.outer_radius = 0.41
-	ring.rings = 32
-	ring.ring_segments = 6
-	_destination_marker.mesh = ring
-	_destination_marker.material_override = _flat_material(Color("f5d690"))
+	var disc := CylinderMesh.new()
+	disc.top_radius = 0.42
+	disc.bottom_radius = 0.42
+	disc.height = 0.04
+	disc.radial_segments = 24
+	_destination_marker.mesh = disc
+	_destination_marker.material_override = _flat_material(Color(0.95, 0.77, 0.32, 0.58))
 	_destination_marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_destination_marker.hide()
+	_destination_marker.visible = false
 	add_child(_destination_marker)
+
 	_route = MultiMeshInstance3D.new()
-	var dot := CylinderMesh.new()
-	dot.top_radius = 0.065
-	dot.bottom_radius = 0.065
-	dot.height = 0.013
-	dot.radial_segments = 8
-	dot.material = _flat_material(Color("eed799"))
 	_route.multimesh = MultiMesh.new()
 	_route.multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	var dot := CylinderMesh.new()
+	dot.top_radius = 0.08
+	dot.bottom_radius = 0.08
+	dot.height = 0.03
+	dot.radial_segments = 12
+	_route.material_override = _flat_material(Color(0.95, 0.84, 0.52, 0.48))
 	_route.multimesh.mesh = dot
 	_route.multimesh.instance_count = 625
 	_route.multimesh.visible_instance_count = 0
 	_route.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_route)
 
-func tile_under_cursor(screen_position: Vector2) -> Vector2i:
+# Object Picking & Ground fallback (R1, R2)
+func pick_object_or_ground(screen_position: Vector2) -> Dictionary:
+	var result := {
+		"entity": null,
+		"tile": Vector2i(999, 999)
+	}
 	if not is_instance_valid(camera):
-		return Vector2i(999, 999)
+		return result
+
 	var origin := camera.project_ray_origin(screen_position)
 	var direction := camera.project_ray_normal(screen_position)
+
+	# 1. Physics raycast against interactive entities (Layer 2)
+	var space_state = get_world_3d().direct_space_state
+	var query = PhysicsRayQueryParameters3D.create(origin, origin + direction * 150.0, 2)
+	query.collide_with_areas = true
+	query.collide_with_bodies = true
+	var hit = space_state.intersect_ray(query)
+
+	if not hit.is_empty():
+		var collider = hit.get("collider")
+		var ent = _find_entity_ancestor(collider)
+		if ent:
+			result["entity"] = ent
+			if ent.has_method("get_entity_tile"):
+				result["tile"] = ent.get_entity_tile()
+			return result
+
+	# 2. Fallback to ground plane raycast
 	var intersection = Plane(Vector3.UP, 0.0).intersects_ray(origin, direction)
-	if intersection == null:
-		return Vector2i(999, 999)
-	return world.world_to_tile(intersection)
+	if intersection != null:
+		result["tile"] = world.world_to_tile(intersection)
+
+	return result
+
+func _find_entity_ancestor(node: Node) -> Node:
+	var cur = node
+	while cur != null and cur != self and cur != world:
+		if cur is TreeNode or cur is NpcNode or cur is LogPileNode:
+			return cur
+		cur = cur.get_parent()
+	return null
+
+func tile_under_cursor(screen_position: Vector2) -> Vector2i:
+	var pick = pick_object_or_ground(screen_position)
+	return pick.tile
 
 func travel_to(tile: Vector2i) -> bool:
 	if not player.motion.request_destination(navigation, tile):
@@ -181,77 +225,111 @@ var _active_npc_tile: Vector2i = Vector2i(999, 999)
 func toggle_grid() -> void:
 	grid_visible = not grid_visible
 	world.set_grid_visible(grid_visible)
-	hud.grid_button.text = "G   Grid on" if grid_visible else "G   Tile grid"
+	if is_instance_valid(hud.grid_button):
+		hud.grid_button.text = "G  Grid on" if grid_visible else "G  Grid"
+
+var _rmb_press_pos := Vector2.ZERO
+var _rmb_press_target: Dictionary = {}
+var _rmb_drag_exceeded := false
 
 func _unhandled_input(event: InputEvent) -> void:
 	if hud.is_dialogue_open():
 		return
-	if event is InputEventMouseButton and event.pressed:
-		hud.hide_context_menu()
-		var clicked_tile = tile_under_cursor(event.position)
-		if event.button_index == MOUSE_BUTTON_LEFT:
+
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			hud.hide_context_menu()
+			var pick = pick_object_or_ground(event.position)
+			var ent: Node = pick.get("entity", null)
+			var clicked_tile: Vector2i = pick.get("tile", Vector2i(999, 999))
 			_cancel_pending_interaction()
 			player.stop_chopping()
-			travel_to(clicked_tile)
+			# R4: Left-click on interactive object performs its primary action
+			if ent != null and ent.has_method("get_primary_action"):
+				var prim = ent.get_primary_action()
+				var act_type = prim.get("action", "")
+				if act_type == "chop":
+					_start_woodcut_action(clicked_tile)
+				elif act_type == "talk":
+					_start_talk_action(clicked_tile)
+				elif act_type == "deposit":
+					_deposit_logs_action()
+				else:
+					travel_to(clicked_tile)
+			else:
+				travel_to(clicked_tile)
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
-			_handle_right_click(event.position, clicked_tile)
+			if event.pressed:
+				hud.hide_context_menu()
+				_rmb_press_pos = event.position
+				_rmb_press_target = pick_object_or_ground(event.position)
+				_rmb_drag_exceeded = false
+			else:
+				# R8: Right-click opens menu on release, not on press
+				# Check if drag exceeded 6 px (matching camera.DRAG_THRESHOLD)
+				var dist = event.position.distance_to(_rmb_press_pos)
+				var camera_dragged = camera.rmb_dragged if is_instance_valid(camera) else false
+				if not _rmb_drag_exceeded and not camera_dragged and dist < camera.DRAG_THRESHOLD:
+					var ent: Node = _rmb_press_target.get("entity", null)
+					var tile: Vector2i = _rmb_press_target.get("tile", Vector2i(999, 999))
+					_handle_right_click(_rmb_press_pos, ent, tile)
+				_rmb_press_target.clear()
 
-func _handle_right_click(screen_pos: Vector2, tile: Vector2i) -> void:
+	elif event is InputEventMouseMotion:
+		if is_instance_valid(camera) and camera.orbiting:
+			if event.position.distance_to(_rmb_press_pos) >= camera.DRAG_THRESHOLD:
+				_rmb_drag_exceeded = true
+
+func _handle_right_click(screen_pos: Vector2, arg1: Variant, arg2: Variant = null) -> void:
+	var ent: Node = null
+	var tile: Vector2i = Vector2i(999, 999)
+	if arg2 != null:
+		ent = arg1 as Node
+		tile = arg2 as Vector2i
+	elif arg1 is Vector2i:
+		tile = arg1
+		if world.is_tree_at(tile):
+			ent = world.get_tree_data(tile).get("node", null)
+		elif world.is_npc_at(tile):
+			ent = world.get_npc_at(tile)
+		elif tile == world.LOGPILE_TILE:
+			ent = world.logpile_node
+	elif arg1 is Node:
+		ent = arg1
+		if ent.has_method("get_entity_tile"):
+			tile = ent.get_entity_tile()
+
+	# R3: Right-click takes picked entity and builds context menu from advertised options
+	if ent != null and ent.has_method("get_context_options"):
+		var callbacks := {
+			"chop": func(): _start_woodcut_action(tile),
+			"talk": func(): _start_talk_action(tile),
+			"deposit": func(): _deposit_logs_action(),
+			"examine": func():
+				if ent is NpcNode:
+					hud.show_message(ent.examine)
+				elif ent is TreeNode:
+					var type_name: String = ent.tree_type.capitalize() + " Tree"
+					if ent.is_stump:
+						hud.show_message("The cut stump of a %s." % ent.tree_type)
+					else:
+						hud.show_message("A sturdy %s in the forest." % type_name)
+				elif ent is LogPileNode:
+					hud.show_message("Lumber clearing log pile. Mabb stacks timber here.")
+		}
+		var options = ent.get_context_options(callbacks)
+		hud.show_context_menu(screen_pos, options)
+		return
+
+	# Fallback if tile matching is needed
 	if not world.REGION.has_point(tile):
 		return
 	if world.is_npc_at(tile):
-		var npc = world.get_npc_at(tile)
-		var options: Array[Dictionary] = [
-			{
-				"text": "Talk-to " + npc.display_name,
-				"callback": func(): _start_talk_action(tile)
-			},
-			{
-				"text": "Examine",
-				"callback": func(): hud.show_message(npc.examine, 4.0)
-			},
-			{
-				"text": "Cancel",
-				"callback": func(): pass
-			}
-		]
-		hud.show_context_menu(screen_pos, options)
-		return
-	if tile == world.LOGPILE_TILE:
-		var options: Array[Dictionary] = [
-			{
-				"text": "Deposit logs",
-				"callback": func(): _deposit_logs_action()
-			},
-			{
-				"text": "Examine",
-				"callback": func(): hud.show_message("Lumber clearing log pile. Mabb stacks timber here.", 3.0)
-			},
-			{
-				"text": "Cancel",
-				"callback": func(): pass
-			}
-		]
-		hud.show_context_menu(screen_pos, options)
-		return
-	if world.is_tree_at(tile):
-		var tree_info = world.get_tree_data(tile)
-		var type_name: String = str(tree_info.get("type", "Tree")).capitalize() + " Tree"
-		var options: Array[Dictionary] = [
-			{
-				"text": "Chop " + type_name,
-				"callback": func(): _start_woodcut_action(tile)
-			},
-			{
-				"text": "Examine",
-				"callback": func(): hud.show_message("A sturdy %s in the forest." % type_name, 3.0)
-			},
-			{
-				"text": "Cancel",
-				"callback": func(): pass
-			}
-		]
-		hud.show_context_menu(screen_pos, options)
+		_start_talk_action(tile)
+	elif world.is_tree_at(tile):
+		_start_woodcut_action(tile)
+	elif tile == world.LOGPILE_TILE:
+		_deposit_logs_action()
 
 func _deposit_logs_action() -> void:
 	if player.inventory.is_empty():
@@ -272,7 +350,7 @@ func _deposit_logs_action() -> void:
 	player.inventory = remaining_inv
 	player.coins += total_coins
 	world.set_logpile_has_logs(true)
-	hud.show_message("Mabb counts your logs without looking up. 'They'll float Thursday.' (+%dc)" % total_coins, 4.0)
+	hud.show_message("Mabb counts your logs without looking up. 'They'll float Thursday.' (+%dc)" % total_coins)
 
 func _start_woodcut_action(tree_tile: Vector2i) -> void:
 	if not world.is_tree_at(tree_tile):
@@ -295,7 +373,6 @@ func _start_woodcut_action(tree_tile: Vector2i) -> void:
 	if best_tile != Vector2i(999, 999):
 		_pending_action = { "kind": "chop", "tile": tree_tile }
 		travel_to(best_tile)
-		hud.show_message("Walking to tree...")
 	else:
 		hud.show_message("I can't reach that tree.")
 
@@ -313,7 +390,6 @@ func _start_talk_action(npc_tile: Vector2i) -> void:
 	if best_tile != Vector2i(999, 999):
 		_pending_action = { "kind": "talk", "tile": npc_tile }
 		travel_to(best_tile)
-		hud.show_message("Walking to %s..." % npc.display_name)
 	else:
 		hud.show_message("I can't reach %s." % npc.display_name)
 
@@ -335,7 +411,6 @@ func _find_adjacent_walkable(target_tile: Vector2i) -> Vector2i:
 
 func _open_dialogue_with_npc(npc: NpcNode) -> void:
 	player.stop_chopping()
-	# Face each other
 	var player_world_pos = world.tile_to_world(player.motion.current_tile)
 	var npc_world_pos = world.tile_to_world(npc.home_tile)
 	npc.turn_to_face(player_world_pos)
@@ -358,16 +433,30 @@ func _process(delta: float) -> void:
 	_time += delta
 	var camera_orbiting: bool = camera.orbiting if is_instance_valid(camera) else false
 	var dialogue_active: bool = hud.is_dialogue_open() if is_instance_valid(hud) else false
-	hovered_tile = tile_under_cursor(get_viewport().get_mouse_position())
-	_hover_marker.visible = world.REGION.has_point(hovered_tile) and not camera_orbiting and not dialogue_active
-	if _hover_marker.visible:
+
+	# Object Picking & Inverted-Hull Hover Outline (R5, R6, R7)
+	var mouse_pos = get_viewport().get_mouse_position()
+	var pick = pick_object_or_ground(mouse_pos)
+	var new_hovered_ent: Node = pick.get("entity", null)
+	hovered_tile = pick.get("tile", Vector2i(999, 999))
+
+	if camera_orbiting or dialogue_active:
+		new_hovered_ent = null
+
+	if hovered_entity != new_hovered_ent:
+		if is_instance_valid(hovered_entity) and hovered_entity.has_method("set_highlighted"):
+			hovered_entity.set_highlighted(false)
+		hovered_entity = new_hovered_ent
+		if is_instance_valid(hovered_entity) and hovered_entity.has_method("set_highlighted"):
+			hovered_entity.set_highlighted(true)
+
+	# Ground marker (R6): narrow job — walkable and blocked ground only. No green tree tint.
+	var show_ground_marker = world.REGION.has_point(hovered_tile) and not camera_orbiting and not dialogue_active and (hovered_entity == null)
+	_hover_marker.visible = show_ground_marker
+	if show_ground_marker:
 		_hover_marker.position = _marker_position(hovered_tile)
-		if world.is_npc_at(hovered_tile):
-			_hover_material.albedo_color = Color(0.95, 0.82, 0.35, 0.45)
-		elif world.is_tree_at(hovered_tile):
-			_hover_material.albedo_color = Color(0.25, 0.78, 0.40, 0.38)
-		else:
-			_hover_material.albedo_color = Color(0.97, 0.9, 0.64, 0.28) if navigation.is_walkable(hovered_tile) else Color(0.86, 0.32, 0.23, 0.40)
+		_hover_material.albedo_color = Color(0.97, 0.9, 0.64, 0.28) if navigation.is_walkable(hovered_tile) else Color(0.86, 0.32, 0.23, 0.40)
+
 	_destination_marker.visible = player.motion.moving and not hud.is_dialogue_open()
 	_destination_marker.scale = Vector3.ONE * (1.0 + sin(_time * 4.0) * 0.10)
 
@@ -389,5 +478,6 @@ func _process(delta: float) -> void:
 	_ui_timer += delta
 	if _ui_timer >= 0.10:
 		_ui_timer = 0.0
-		hud.update_state(player)
+		if is_instance_valid(hud):
+			hud.update_state(player)
 		_update_route()

@@ -18,6 +18,12 @@ var canopy: Node3D
 var stump: Node3D
 var trunk_mesh: MeshInstance3D
 
+var pick_area: Area3D
+var pick_collision: CollisionShape3D
+var cylinder_shape: CylinderShape3D
+var is_highlighted: bool = false
+static var _outline_material: StandardMaterial3D
+
 func initialize(p_tile: Vector2i, p_type: String, p_height: float, materials: Dictionary) -> void:
 	tile = p_tile
 	tree_type = p_type
@@ -36,7 +42,41 @@ func initialize(p_tile: Vector2i, p_type: String, p_height: float, materials: Di
 	stump.name = "Stump"
 	add_child(stump)
 
+	_setup_collision()
 	_build_visuals(materials)
+
+func _setup_collision() -> void:
+	pick_area = Area3D.new()
+	pick_area.name = "PickArea"
+	# Layer 2 for interactive entities
+	pick_area.collision_layer = 2
+	pick_area.collision_mask = 0
+	pick_area.monitoring = false
+	pick_area.monitorable = true
+
+	pick_collision = CollisionShape3D.new()
+	cylinder_shape = CylinderShape3D.new()
+	pick_collision.shape = cylinder_shape
+	pick_area.add_child(pick_collision)
+	add_child(pick_area)
+	_update_collision_shape()
+
+func _update_collision_shape() -> void:
+	var new_shape = CylinderShape3D.new()
+	if is_stump:
+		new_shape.height = 0.35
+		new_shape.radius = 0.35
+		pick_collision.position = Vector3(0, 0.175, 0)
+	else:
+		new_shape.height = height
+		var rad: float = 1.2
+		if tree_type == "pine":
+			rad = 1.0
+		elif tree_type == "willow":
+			rad = 1.3
+		new_shape.radius = rad
+		pick_collision.position = Vector3(0, height * 0.5, 0)
+	pick_collision.shape = new_shape
 
 func _build_visuals(materials: Dictionary) -> void:
 	trunk_mesh = MeshInstance3D.new()
@@ -140,6 +180,7 @@ func fell() -> bool:
 	hit_points = 0
 	canopy.visible = false
 	stump.visible = true
+	_update_collision_shape()
 	var tree_info = WoodcuttingData.get_tree_info(tree_type)
 	respawn_timer = tree_info.get("respawn_time", 25.0)
 	state_changed.emit(tile, true)
@@ -152,6 +193,7 @@ func respawn() -> void:
 	hit_points = max_hp
 	canopy.visible = true
 	stump.visible = false
+	_update_collision_shape()
 	respawn_timer = 0.0
 	state_changed.emit(tile, false)
 
@@ -160,6 +202,68 @@ func advance(delta: float) -> void:
 		respawn_timer -= delta
 		if respawn_timer <= 0.0:
 			respawn()
+
+static func get_outline_material() -> StandardMaterial3D:
+	if _outline_material == null:
+		_outline_material = StandardMaterial3D.new()
+		_outline_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		# Highlight #fff6e4 from art-direction.md §2
+		_outline_material.albedo_color = Color("fff6e4")
+		_outline_material.cull_mode = BaseMaterial3D.CULL_FRONT
+		_outline_material.grow = true
+		_outline_material.grow_amount = 0.02
+	return _outline_material
+
+func set_highlighted(enabled: bool) -> void:
+	if is_highlighted == enabled:
+		return
+	is_highlighted = enabled
+	var mat: Material = get_outline_material() if enabled else null
+	_apply_material_overlay(self, mat)
+
+func _apply_material_overlay(node: Node, mat: Material) -> void:
+	if node is MeshInstance3D:
+		node.material_overlay = mat
+	for child in node.get_children():
+		if child is Area3D:
+			continue
+		_apply_material_overlay(child, mat)
+
+func get_entity_tile() -> Vector2i:
+	return tile
+
+func get_primary_action() -> Dictionary:
+	if is_stump:
+		return {}
+	var type_name: String = tree_type.capitalize() + " Tree"
+	return {
+		"action": "chop",
+		"tile": tile,
+		"text": "Chop " + type_name
+	}
+
+func get_context_options(callbacks: Dictionary) -> Array[Dictionary]:
+	var options: Array[Dictionary] = []
+	var type_name: String = tree_type.capitalize() + " Tree"
+	if not is_stump:
+		options.append({
+			"text": "Chop " + type_name,
+			"callback": callbacks.get("chop", Callable())
+		})
+		options.append({
+			"text": "Examine",
+			"callback": callbacks.get("examine", Callable())
+		})
+	else:
+		options.append({
+			"text": "Examine",
+			"callback": callbacks.get("examine", Callable())
+		})
+	options.append({
+		"text": "Cancel",
+		"callback": Callable()
+	})
+	return options
 
 func to_dict() -> Dictionary:
 	return {

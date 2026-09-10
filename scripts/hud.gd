@@ -10,19 +10,19 @@ const Minimap = preload("res://scripts/minimap.gd")
 const WoodcuttingData = preload("res://scripts/woodcutting_data.gd")
 const DialogueBox = preload("res://scripts/dialogue_box.gd")
 const QuestJournal = preload("res://scripts/quest_journal.gd")
+const MessageLog = preload("res://scripts/message_log.gd")
+const BagWindow = preload("res://scripts/bag_window.gd")
 
 const INK := Color("25382f")
 const GOLD := Color("dbc28b")
 const TEXT := Color("eee8d9")
 const MUTED := Color("b2beb0")
+const HIGHLIGHT := Color("fff6e4")
 
 var status_label: Label
 var tile_label: Label
 var travel_label: Label
 var woodcut_label: Label
-var hint_label: Label
-var grid_button: Button
-var journal_button: Button
 var minimap: Control
 var context_menu: PanelContainer
 var _context_vbox: VBoxContainer
@@ -32,34 +32,51 @@ var help_text: Label
 var resume_button: Button
 var dialogue_box: PanelContainer
 var quest_journal: PanelContainer
+
+# UI Shell components
+var message_log: PanelContainer
+var bag_window: PanelContainer
+var menu_bar: HBoxContainer
+var bag_button: Button
+var journal_button: Button
+var character_button: Button
+var settings_button: Button
+var grid_button: Button
+var recenter_button: Button
+
 var _title_font: Font
 var _body_font: Font
-var _message_time := 0.0
 var _root: Control
+var _player: Node3D
 
 func initialize(world: Node3D, player: Node3D, camera: Camera3D, game_state: RefCounted = null, dialogue_runner: RefCounted = null) -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_player = player
 	_title_font = load("res://assets/fonts/Alegreya.ttf")
 	_body_font = load("res://assets/fonts/Lato-Regular.ttf")
 	_root = Control.new()
 	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
+
 	var theme := Theme.new()
 	theme.default_font = _body_font
 	theme.default_font_size = 17
 	_root.theme = theme
-	_build_identity()
+
+	# R1: _build_identity() deleted. Top-left is clear.
 	_build_map(world, player, camera)
 	_build_player_panel()
-	_build_actions()
+	_build_message_log()
+	_build_menu_bar()
+	_build_bag_window(player)
 	_build_context_menu()
 	_build_dialogue_ui(dialogue_runner)
 	_build_journal_ui(game_state, player)
 	_build_pause()
 
 	if player.has_signal("woodcut_progress"):
-		player.woodcut_progress.connect(func(_logs: int, _xp: int, _lvl: int, msg: String): show_message(msg, 3.5))
+		player.woodcut_progress.connect(func(_logs: int, _xp: int, _lvl: int, msg: String): show_message(msg))
 
 func _style(background := INK, border := Color("687259"), radius := 5) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
@@ -97,29 +114,6 @@ func _button(text: String, callback: Callable) -> Button:
 	button.pressed.connect(callback)
 	return button
 
-func _build_identity() -> void:
-	var panel := HBoxContainer.new()
-	panel.position = Vector2(34, 26)
-	panel.add_theme_constant_override("separation", 14)
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(panel)
-	var icon := TextureRect.new()
-	icon.texture = load("res://assets/icon.svg")
-	icon.custom_minimum_size = Vector2(58, 58)
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(icon)
-	var titles := VBoxContainer.new()
-	titles.add_theme_constant_override("separation", -5)
-	titles.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(titles)
-	var title := _label("tinyscape", 48, Color("fff1cb"), true)
-	title.add_theme_color_override("font_shadow_color", Color(0.1, 0.18, 0.13, 0.7))
-	title.add_theme_constant_override("shadow_offset_y", 2)
-	titles.add_child(title)
-	titles.add_child(_label("A small world. A first adventure.", 16, Color("ebefdc")))
-
 func _build_map(world: Node3D, player: Node3D, camera: Camera3D) -> void:
 	var panel := PanelContainer.new()
 	panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
@@ -146,8 +140,8 @@ func _build_player_panel() -> void:
 	panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	panel.offset_left = 30
 	panel.offset_right = 350
-	panel.offset_top = -155
-	panel.offset_bottom = -30
+	panel.offset_top = -295
+	panel.offset_bottom = -170
 	panel.add_theme_stylebox_override("panel", _style(Color("263b30")))
 	_root.add_child(panel)
 	var column := VBoxContainer.new()
@@ -170,35 +164,184 @@ func _build_player_panel() -> void:
 	travel_label = _label("Your journey starts here", 14, MUTED)
 	column.add_child(travel_label)
 
-func _build_actions() -> void:
-	var column := VBoxContainer.new()
-	column.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	column.offset_left = -310
-	column.offset_right = 310
-	column.offset_top = -110
-	column.offset_bottom = -30
-	column.add_theme_constant_override("separation", 12)
-	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(column)
-	hint_label = _label("Click a tile to begin your adventure", 18, Color("f7edcd"))
-	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint_label.add_theme_color_override("font_shadow_color", Color("273c2f"))
-	hint_label.add_theme_constant_override("shadow_offset_y", 2)
-	column.add_child(hint_label)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(row)
-	grid_button = _button("G   Tile grid", func(): grid_toggled.emit())
-	grid_button.tooltip_text = "Show or hide the tile grid (G)"
-	row.add_child(grid_button)
-	journal_button = _button("J   Journal", func(): toggle_journal())
+func _build_message_log() -> void:
+	message_log = MessageLog.new()
+	message_log.initialize(_title_font, _body_font)
+	message_log.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	message_log.offset_left = 30
+	message_log.offset_right = 490
+	message_log.offset_top = -160
+	message_log.offset_bottom = -30
+	_root.add_child(message_log)
+
+func _build_menu_bar() -> void:
+	# Menu bar: bottom-right above footer text
+	var bar_container = PanelContainer.new()
+	bar_container.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	bar_container.offset_left = -330
+	bar_container.offset_right = -30
+	bar_container.offset_top = -80
+	bar_container.offset_bottom = -30
+
+	var bar_style = StyleBoxFlat.new()
+	bar_style.bg_color = Color("1e2f24")
+	bar_style.border_color = GOLD
+	bar_style.set_border_width_all(1)
+	bar_style.set_corner_radius_all(6)
+	bar_style.content_margin_left = 8
+	bar_style.content_margin_right = 8
+	bar_style.content_margin_top = 4
+	bar_style.content_margin_bottom = 4
+	bar_container.add_theme_stylebox_override("panel", bar_style)
+	_root.add_child(bar_container)
+
+	menu_bar = HBoxContainer.new()
+	menu_bar.add_theme_constant_override("separation", 6)
+	bar_container.add_child(menu_bar)
+
+	bag_button = _menu_bar_button("Bag (B)", func(): toggle_bag())
+	bag_button.tooltip_text = "Open or close your rucksack (B)"
+	menu_bar.add_child(bag_button)
+
+	journal_button = _menu_bar_button("Journal (J)", func(): toggle_journal())
 	journal_button.tooltip_text = "Open or close the quest journal (J)"
-	row.add_child(journal_button)
-	row.add_child(_button("V   Character", func(): inspect_requested.emit()))
-	row.add_child(_button("Home   Recenter", func(): recenter_requested.emit()))
-	row.add_child(_button("?   Controls", func(): show_pause(true)))
+	menu_bar.add_child(journal_button)
+
+	character_button = _menu_bar_button("Character (V)", func(): inspect_requested.emit())
+	character_button.tooltip_text = "Toggle character close-up inspect view (V)"
+	menu_bar.add_child(character_button)
+
+	settings_button = _menu_bar_button("Settings (Esc)", func(): show_pause(true))
+	settings_button.tooltip_text = "Open pause & game controls (Esc)"
+	menu_bar.add_child(settings_button)
+
+	# Footer secondary controls (G / Home)
+	var footer_row = HBoxContainer.new()
+	footer_row.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	footer_row.offset_left = -330
+	footer_row.offset_right = -30
+	footer_row.offset_top = -26
+	footer_row.offset_bottom = -6
+	footer_row.add_theme_constant_override("separation", 12)
+	_root.add_child(footer_row)
+
+	grid_button = Button.new()
+	grid_button.text = "G  Grid"
+	grid_button.flat = true
+	grid_button.add_theme_font_size_override("font_size", 12)
+	grid_button.add_theme_color_override("font_color", MUTED)
+	grid_button.pressed.connect(func(): grid_toggled.emit())
+	footer_row.add_child(grid_button)
+
+	recenter_button = Button.new()
+	recenter_button.text = "Home  Recenter"
+	recenter_button.flat = true
+	recenter_button.add_theme_font_size_override("font_size", 12)
+	recenter_button.add_theme_color_override("font_color", MUTED)
+	recenter_button.pressed.connect(func(): recenter_requested.emit())
+	footer_row.add_child(recenter_button)
+
+func _menu_bar_button(text: String, callback: Callable) -> Button:
+	var btn = Button.new()
+	btn.text = text
+	btn.custom_minimum_size = Vector2(65, 36)
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	btn.add_theme_font_size_override("font_size", 13)
+	btn.add_theme_color_override("font_color", TEXT)
+	btn.add_theme_color_override("font_hover_color", GOLD)
+
+	var norm_style = _style(Color("263a2c"), Color("455b44"), 4)
+	norm_style.content_margin_left = 6
+	norm_style.content_margin_right = 6
+	norm_style.content_margin_top = 4
+	norm_style.content_margin_bottom = 4
+	btn.add_theme_stylebox_override("normal", norm_style)
+
+	var hover_style = _style(Color("36503e"), GOLD, 4)
+	hover_style.content_margin_left = 6
+	hover_style.content_margin_right = 6
+	hover_style.content_margin_top = 4
+	hover_style.content_margin_bottom = 4
+	btn.add_theme_stylebox_override("hover", hover_style)
+
+	var pressed_style = _style(Color("1b2a20"), GOLD, 4)
+	pressed_style.content_margin_left = 6
+	pressed_style.content_margin_right = 6
+	pressed_style.content_margin_top = 4
+	pressed_style.content_margin_bottom = 4
+	btn.add_theme_stylebox_override("pressed", pressed_style)
+
+	btn.pressed.connect(callback)
+	return btn
+
+func _build_bag_window(player: Node3D) -> void:
+	bag_window = BagWindow.new()
+	bag_window.initialize(player, _title_font, _body_font, func(pos, opts): show_context_menu(pos, opts))
+	bag_window.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	bag_window.offset_left = -270
+	bag_window.offset_right = -30
+	bag_window.offset_top = -455
+	bag_window.offset_bottom = -95
+
+	bag_window.item_examined.connect(func(item: Dictionary):
+		show_message("%s: A freshly cut log from the woods. Worth %dc." % [item.get("name", "Log"), item.get("value", 4)])
+	)
+	bag_window.item_dropped.connect(func(index: int, item: Dictionary):
+		if is_instance_valid(_player) and index < _player.inventory.size():
+			_player.inventory.remove_at(index)
+			bag_window.refresh()
+			show_message("You drop the %s." % item.get("name", "item"))
+	)
+
+	_root.add_child(bag_window)
+
+func toggle_bag() -> void:
+	if not is_instance_valid(bag_window):
+		return
+	var will_open = not bag_window.visible
+	if will_open:
+		# Mutually exclusive: close journal
+		if is_instance_valid(quest_journal):
+			quest_journal.hide()
+		bag_window.refresh()
+		bag_window.show()
+	else:
+		bag_window.hide()
+	_update_menu_bar_states()
+
+func toggle_journal() -> void:
+	if not is_instance_valid(quest_journal):
+		return
+	var will_open = not quest_journal.visible
+	if will_open:
+		# Mutually exclusive: close bag
+		if is_instance_valid(bag_window):
+			bag_window.hide()
+		quest_journal.toggle_journal()
+	else:
+		quest_journal.hide()
+	_update_menu_bar_states()
+
+func _update_menu_bar_states() -> void:
+	if is_instance_valid(bag_button):
+		var is_open = is_instance_valid(bag_window) and bag_window.visible
+		bag_button.button_pressed = is_open
+		# Warm outline indicator if bag full
+		if is_instance_valid(_player) and _player.inventory.size() >= WoodcuttingData.MAX_INVENTORY_SLOTS and not is_open:
+			var alert_style = bag_button.get_theme_stylebox("normal").duplicate() as StyleBoxFlat
+			alert_style.border_color = Color("e6b85b")
+			alert_style.set_border_width_all(2)
+			bag_button.add_theme_stylebox_override("normal", alert_style)
+		else:
+			var norm = _style(Color("263a2c"), Color("455b44"), 4)
+			norm.content_margin_left = 6
+			norm.content_margin_right = 6
+			norm.content_margin_top = 4
+			norm.content_margin_bottom = 4
+			bag_button.add_theme_stylebox_override("normal", norm)
+
+	if is_instance_valid(journal_button):
+		journal_button.button_pressed = is_instance_valid(quest_journal) and quest_journal.visible
 
 func _build_dialogue_ui(runner: RefCounted) -> void:
 	if runner == null:
@@ -224,15 +367,14 @@ func _build_journal_ui(game_state: RefCounted, player: Node3D) -> void:
 	quest_journal.offset_bottom = 180
 	_root.add_child(quest_journal)
 
-func toggle_journal() -> void:
-	if is_instance_valid(quest_journal):
-		quest_journal.toggle_journal()
-
 func is_dialogue_open() -> bool:
 	return is_instance_valid(dialogue_box) and dialogue_box.visible
 
 func is_journal_open() -> bool:
 	return is_instance_valid(quest_journal) and quest_journal.visible
+
+func is_bag_open() -> bool:
+	return is_instance_valid(bag_window) and bag_window.visible
 
 func open_dialogue(dialogue_id: String, speaker_name: String) -> void:
 	if is_instance_valid(dialogue_box):
@@ -240,6 +382,9 @@ func open_dialogue(dialogue_id: String, speaker_name: String) -> void:
 			context_menu.hide()
 		if is_instance_valid(quest_journal):
 			quest_journal.hide()
+		if is_instance_valid(bag_window):
+			bag_window.hide()
+		_update_menu_bar_states()
 		dialogue_box.open_dialogue(dialogue_id, speaker_name)
 
 func _build_pause() -> void:
@@ -249,76 +394,91 @@ func _build_pause() -> void:
 	_root.add_child(pause_screen)
 	var shade := ColorRect.new()
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	shade.color = Color(0.07, 0.14, 0.10, 0.72)
+	shade.color = Color(0.1, 0.16, 0.12, 0.62)
 	pause_screen.add_child(shade)
-	var panel := PanelContainer.new()
-	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	panel.offset_left = -255
-	panel.offset_right = 255
-	panel.offset_top = -250
-	panel.offset_bottom = 250
-	panel.add_theme_stylebox_override("panel", _style(INK, GOLD, 8))
-	pause_screen.add_child(panel)
+	var card := PanelContainer.new()
+	card.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	card.offset_left = -280
+	card.offset_right = 280
+	card.offset_top = -200
+	card.offset_bottom = 200
+	card.add_theme_stylebox_override("panel", _style(Color("22362b"), GOLD, 8))
+	pause_screen.add_child(card)
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 17)
-	panel.add_child(column)
-	pause_title = _label("A moment of rest", 40, GOLD, true)
+	column.add_theme_constant_override("separation", 14)
+	card.add_child(column)
+	pause_title = _label("Game Paused", 34, GOLD, true)
 	pause_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(pause_title)
-	help_text = _label("Left click   Walk to a tile\nMinimap   Click to travel further\nRight drag or Q / E   Orbit camera\nScroll   Zoom in or out\nV   Inspect character\nJ   Quest journal\nG   Show the tile grid\nHome   Reset camera\nEsc   Pause or resume", 19, TEXT)
-	help_text.add_theme_constant_override("line_spacing", 13)
+	help_text = _label("• Left click ground: travel\n• Left click object: chop / talk / deposit\n• Right click: context actions\n• Right drag: orbit camera\n• Mouse wheel: zoom\n• B: Rucksack | J: Quest Journal | V: Character View\n• G: Tile grid | Home: Reset camera | Esc: Close window / Pause", 15, TEXT)
+	help_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(help_text)
-	column.add_child(_label("Routes avoid trees, buildings and water.\nClick again while walking to change your destination.", 15, MUTED))
-	resume_button = _button("Return to Willowmere", hide_pause)
+	resume_button = _button("Resume adventure", func(): hide_pause())
 	column.add_child(resume_button)
-	column.add_child(_button("Quit game", func(): get_tree().quit()))
 
-func show_pause(controls := false) -> void:
-	pause_title.text = "Find your feet" if controls else "A moment of rest"
-	pause_screen.show()
-	pause_changed.emit(true)
+func show_pause(is_help := false) -> void:
+	if is_dialogue_open():
+		return
+	if is_instance_valid(context_menu):
+		context_menu.hide()
+	pause_title.text = "Controls & Exploration" if is_help else "Game Paused"
+	resume_button.text = "Back to adventure" if is_help else "Resume adventure"
+	pause_screen.visible = true
 	get_tree().paused = true
-	resume_button.grab_focus()
+	pause_changed.emit(true)
 
 func hide_pause() -> void:
-	pause_screen.hide()
+	pause_screen.visible = false
 	get_tree().paused = false
 	pause_changed.emit(false)
-	resume_button.release_focus()
 
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	# 1. Dialogue box consumes input first
 	if is_dialogue_open():
 		if dialogue_box.handle_input(event):
 			get_viewport().set_input_as_handled()
 			return
 
-	# 2. Quest journal consumes input next
-	if is_journal_open():
-		if event is InputEventKey and event.pressed and not event.echo:
-			if event.keycode == KEY_J or event.keycode == KEY_ESCAPE:
-				quest_journal.hide()
+	# 2. Esc closes topmost open window (Bag, Journal, then Pause) per R6
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_ESCAPE:
+			if is_instance_valid(context_menu) and context_menu.visible:
+				context_menu.hide()
 				get_viewport().set_input_as_handled()
 				return
-
-	# 3. Standard gameplay hotkeys
-	if event is InputEventKey and event.pressed and not event.echo:
-		match event.keycode:
-			KEY_ESCAPE:
-				if pause_screen.visible:
-					hide_pause()
-				else:
-					show_pause()
+			if is_bag_open():
+				toggle_bag()
 				get_viewport().set_input_as_handled()
-			KEY_J:
-				if not get_tree().paused:
-					toggle_journal()
-					get_viewport().set_input_as_handled()
-			KEY_G:
-				if not get_tree().paused:
-					grid_toggled.emit()
-			KEY_H, KEY_F1:
-				show_pause(true)
+				return
+			if is_journal_open():
+				toggle_journal()
+				get_viewport().set_input_as_handled()
+				return
+			if pause_screen.visible:
+				hide_pause()
+			else:
+				show_pause()
+			get_viewport().set_input_as_handled()
+			return
+		elif event.keycode == KEY_B:
+			if not get_tree().paused:
+				toggle_bag()
+				get_viewport().set_input_as_handled()
+				return
+		elif event.keycode == KEY_J:
+			if not get_tree().paused:
+				toggle_journal()
+				get_viewport().set_input_as_handled()
+				return
+		elif event.keycode == KEY_G:
+			if not get_tree().paused:
+				grid_toggled.emit()
+				get_viewport().set_input_as_handled()
+				return
+		elif event.keycode == KEY_H or event.keycode == KEY_F1:
+			show_pause(true)
+			get_viewport().set_input_as_handled()
+			return
 
 func _build_context_menu() -> void:
 	context_menu = PanelContainer.new()
@@ -332,7 +492,6 @@ func _build_context_menu() -> void:
 	context_menu.add_child(_context_vbox)
 
 func show_context_menu(screen_pos: Vector2, options: Array[Dictionary]) -> void:
-	# Clear previous items
 	for child in _context_vbox.get_children():
 		child.queue_free()
 
@@ -383,21 +542,10 @@ func update_state(player: Node3D) -> void:
 			coins_count
 		]
 	travel_label.text = "%d tiles explored" % player.steps if player.steps else "Your journey starts here"
-	if is_dialogue_open():
-		hint_label.text = ""
-		return
-	if _message_time <= 0.0:
-		if player.get("chopping"):
-			hint_label.text = "Chopping tree at tile %d, %d..." % [player.target_tree_tile.x, player.target_tree_tile.y]
-		elif player.motion.moving:
-			hint_label.text = "Walking to tile %d, %d" % [player.motion.destination.x, player.motion.destination.y]
-		else:
-			hint_label.text = "Click a tile to walk, or right-click to interact"
+	if is_instance_valid(bag_window) and bag_window.visible:
+		bag_window.refresh()
+	_update_menu_bar_states()
 
-func show_message(text: String, seconds := 3.0) -> void:
-	if not is_dialogue_open():
-		hint_label.text = text
-	_message_time = seconds
-
-func _process(delta: float) -> void:
-	_message_time = maxf(0, _message_time - delta)
+func show_message(text: String, _seconds: float = 3.0) -> void:
+	if is_instance_valid(message_log):
+		message_log.add_message(text)
