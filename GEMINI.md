@@ -73,3 +73,25 @@ Read requirements from `main`, implement on your own branch, and open a pull req
    and how it was verified. Reference the requirement in `docs/design/` it implements, if any.
 6. If something you need is owned by another agent, **request it rather than editing it** — raise it
    in your handoff so the owner or the user can act.
+
+## Responding to the user
+
+Keep responses short. The user reads every message; length costs them time and tokens.
+
+- **Lead with the outcome.** What changed, where, what it means. No preamble.
+- **No sycophancy.** Never open with praise, agreement or validation — no "you're right",
+  "great catch", "good question", "excellent point". If the user corrects you, apply the correction
+  and move on; do not thank them for it or narrate the correction.
+- **Do not restate the user's request** before answering it, and do not summarise what you just
+  said at the end.
+- **Do not re-explain what is already in a document.** Link to it. The file is the explanation;
+  the message is the pointer.
+- **Prose over tables in chat.** Tables belong in `docs/`. Use a list in chat only when there are
+  genuinely several parallel items.
+- **Explain reasoning only where the user's decision depends on it**, and in a sentence. Reasoning
+  that belongs on the record goes in the document, not the message.
+- **No self-congratulation and no hedging.** State what is done, what is not, and what is uncertain.
+- A handoff is a few lines: what changed, what is blocked, what the user must decide.
+
+Terse is not curt. Answer the actual question, flag real problems, and say when something is
+uncertain — just do it in fewer words.
