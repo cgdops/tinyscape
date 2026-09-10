@@ -24,7 +24,9 @@ user's sign-off) · `implemented` (exists in the build).
 
 ## NPCs
 
-_None yet._
+- **Mabb Truet** — Willowmere's woodcutter; buys logs, floats them to Harrowick. Leaves something
+  at every stump and never explains it. Defined in
+  [design/woodcutting-skill.md](../design/woodcutting-skill.md) §6. Status: `approved`, minimal.
 
 ## Quests
 
@@ -32,10 +34,12 @@ _None yet._
 
 ## Skills
 
-_None yet._
+- [woodcutting-skill.md](../design/woodcutting-skill.md) — tiers, XP curve, inventory, log sink.
+  Status: `approved`, in development.
 
 ## Changelog
 
 - 2026-09-10 — Index created. No narrative canon established.
 - 2026-09-10 — Three world bible directions proposed. None selected.
 - 2026-09-10 — Direction chosen (Shipwright's Coast + Tithe). World bible written.
+- 2026-09-10 — Woodcutting skill designed. Mabb Truet established as the first named NPC.

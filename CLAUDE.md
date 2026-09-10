@@ -110,6 +110,35 @@ stand alone.
   screenshots should be re-run.
 - Name the **owning agent** and the systems the change touches.
 
+## Sequencing new development
+
+The order work is commissioned in matters more than the quality of any single document. These are
+settled decisions, learned from getting it wrong.
+
+**Fiction stays exactly one step ahead of systems.** Enough to give the *next* system meaning,
+never more. Narrative does not drive the schedule; it justifies it.
+
+**Do not write content for systems that do not exist.** Dialogue before a dialogue system, quests
+before quest state, item flavour before an inventory — all of it is speculative work that will be
+rewritten when the system lands. The world bible is the exception: it is cheap, it constrains every
+name from here on, and it is written once.
+
+**Close loops before opening new ones.** The highest-value work is almost always finishing the loop
+that is half-built, not extending outward. A skill whose output nothing consumes is not a feature,
+it is a counter that goes up. Check what the build actually does before proposing anything new.
+
+**Commission in dependency order, not narrative order.** Assets have the longest lead time and
+parallelise best, so asset requirements go out *earliest* — derived from the skill or system design,
+not from the story. Ideally the asset agent and the gameplay agent are building simultaneously and
+neither is waiting on the other.
+
+**The design document is the blocker.** Both other agents read requirements from `main`. When
+something is agreed, the skill or system design is what unblocks them — write that first, before
+the NPCs, before the flavour text.
+
+**Ask for the minimum fiction the loop needs.** One NPC with a reason to want logs beats a cast of
+four. Scope the narrative to the system being built, and expand only when the next system needs it.
+
 ## Working style
 
 - Small, finished deliverables over sprawling world bibles. One quest fully specified beats ten
