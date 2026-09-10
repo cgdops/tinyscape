@@ -469,43 +469,20 @@ func _forest() -> void:
 	logpile_node.position = tile_to_world(LOGPILE_TILE)
 	add_child(logpile_node)
 
-	# Empty cradle frame
-	logpile_empty_mesh = Node3D.new()
-	logpile_empty_mesh.name = "EmptyFrame"
-	logpile_node.add_child(logpile_empty_mesh)
-	for x_off in [-0.45, 0.45]:
-		var post = MeshInstance3D.new()
-		var post_mesh = BoxMesh.new()
-		post_mesh.size = Vector3(0.08, 0.45, 0.08)
-		post.mesh = post_mesh
-		post.material_override = _materials["wood_dark"]
-		post.position = Vector3(x_off, 0.22, 0)
-		logpile_empty_mesh.add_child(post)
-	var rail = MeshInstance3D.new()
-	var rail_mesh = BoxMesh.new()
-	rail_mesh.size = Vector3(0.98, 0.06, 0.22)
-	rail.mesh = rail_mesh
-	rail.material_override = _materials["wood"]
-	rail.position = Vector3(0, 0.04, 0)
-	logpile_empty_mesh.add_child(rail)
+	# Empty cradle frame asset
+	var empty_asset = load("res://assets/models/woodcutting/LogPileEmpty.glb") as PackedScene
+	if empty_asset:
+		logpile_empty_mesh = empty_asset.instantiate()
+		logpile_empty_mesh.name = "EmptyFrame"
+		logpile_node.add_child(logpile_empty_mesh)
 
-	# Stacked logs frame (visible when holding deposited logs)
-	logpile_stacked_mesh = Node3D.new()
-	logpile_stacked_mesh.name = "StackedLogs"
-	logpile_node.add_child(logpile_stacked_mesh)
-	for i in range(7):
-		var log_inst = MeshInstance3D.new()
-		var cyl = CylinderMesh.new()
-		cyl.top_radius = 0.13
-		cyl.bottom_radius = 0.13
-		cyl.height = 0.95
-		cyl.radial_segments = 8
-		log_inst.mesh = cyl
-		log_inst.material_override = _materials["wood"]
-		log_inst.position = Vector3(0, 0.15 + (i / 3) * 0.22, -0.3 + (i % 3) * 0.28)
-		log_inst.rotation = Vector3(0, 0, PI * 0.5)
-		logpile_stacked_mesh.add_child(log_inst)
-	logpile_stacked_mesh.visible = false
+	# Stacked logs frame asset (visible when holding deposited logs)
+	var stacked_asset = load("res://assets/models/woodcutting/LogPileStacked.glb") as PackedScene
+	if stacked_asset:
+		logpile_stacked_mesh = stacked_asset.instantiate()
+		logpile_stacked_mesh.name = "StackedLogs"
+		logpile_node.add_child(logpile_stacked_mesh)
+		logpile_stacked_mesh.visible = false
 
 	# Forest mossy boulders
 	for boulder in [Vector2i(15, -9), Vector2i(28, -9), Vector2i(35, -9), Vector2i(15, 9), Vector2i(32, 9)]:
@@ -561,30 +538,12 @@ func _create_interactive_tree(tile: Vector2i, type: String, height: float) -> vo
 			cone_node.rotation.y = tier * 0.55
 			canopy.add_child(cone_node)
 	elif type == "willow":
-		# Willow drooping canopy branches & foliage
-		for i in range(6):
-			var angle = i * TAU / 6.0
-			var sph_node = MeshInstance3D.new()
-			var sph = SphereMesh.new()
-			sph.radius = 0.9
-			sph.height = 2.4
-			sph.radial_segments = 8
-			sph.rings = 4
-			sph_node.mesh = sph
-			sph_node.scale = Vector3(0.9, 1.4, 0.9)
-			sph_node.material_override = _materials[["oak_dark", "oak", "oak_light"][i % 3]]
-			sph_node.position = Vector3(cos(angle) * 0.85, height * 0.52, sin(angle) * 0.85)
-			canopy.add_child(sph_node)
-		var top_sph = MeshInstance3D.new()
-		var top_mesh = SphereMesh.new()
-		top_mesh.radius = 1.0
-		top_mesh.height = 1.6
-		top_mesh.radial_segments = 8
-		top_mesh.rings = 4
-		top_sph.mesh = top_mesh
-		top_sph.material_override = _materials["oak"]
-		top_sph.position = Vector3(0, height * 0.78, 0)
-		canopy.add_child(top_sph)
+		trunk_mesh.visible = false
+		var willow_asset = load("res://assets/models/woodcutting/WillowTree.glb") as PackedScene
+		if willow_asset:
+			var willow_inst = willow_asset.instantiate()
+			willow_inst.name = "WillowMesh"
+			canopy.add_child(willow_inst)
 	else:
 		# Oak canopy spheres
 		for i in range(5):
