@@ -139,6 +139,27 @@ the NPCs, before the flavour text.
 **Ask for the minimum fiction the loop needs.** One NPC with a reason to want logs beats a cast of
 four. Scope the narrative to the system being built, and expand only when the next system needs it.
 
+## Playtest feedback
+
+The user playtests the build. Feedback comes to the director first, raw and undiagnosed — a symptom
+("chopping drags after a few trees"), not a prescription ("set the interval to 1.4"). The same
+symptom can have different owners, and prescribing skips the diagnosis.
+
+Triage each piece into one of four, and say which:
+
+| Kind | Action |
+| --- | --- |
+| **Tuning** — pacing, values, feel | Update the design document and publish to `main`. Never an ad-hoc code tweak: an unrecorded value gets silently reverted later |
+| **Bug** | Hand to the gameplay engineer |
+| **Art reads wrong** | Hand to the asset specialist, cited against `docs/art-direction.md` |
+| **Design change** | Back to the user before acting — it is a scope call |
+
+Exception: crashes and errors go straight to the gameplay engineer without triage.
+
+Log every session in `docs/design/playtest-notes.md`: dated, what was observed, what was done. It
+stops the same feedback being re-litigated and gives tuned numbers a history, so nobody "fixes" a
+value that was set deliberately.
+
 ## Working style
 
 - Small, finished deliverables over sprawling world bibles. One quest fully specified beats ten
