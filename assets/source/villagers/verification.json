@@ -1,0 +1,105 @@
+{
+  "MabbTruet": {
+    "triangles": 2470,
+    "clips_seconds": {
+      "Idle": 3.9999999664723873,
+      "Talk": 1.6666667126119137
+    },
+    "loop_endpoint_error": 0,
+    "unit_scales": true,
+    "finite_vertices": true,
+    "normalized_normals": true,
+    "textures": false
+  },
+  "palette_srgb": {
+    "skin": "b3805e",
+    "skin_light": "c79a76",
+    "hair": "8f8b7e",
+    "hair_light": "a8a396",
+    "tunic": "607840",
+    "linen": "e1cfaa",
+    "leather": "8a5f44",
+    "worn": "3a3026",
+    "trousers": "284636",
+    "sole": "4c4338",
+    "brass": "d4b16d",
+    "eye": "f6f1df",
+    "dark": "2c2f29",
+    "mouth": "814c3c",
+    "wood": "573f2e",
+    "wood_light": "907044",
+    "sage": "8eaa9c",
+    "iron": "414c46"
+  },
+  "foot_drift_m": 5.960464477539063e-08,
+  "rest_height_m": 1.7000000476837158,
+  "base_shoulder_to_hip_ratio": 1.372093023255814,
+  "head_forward_blender": [
+    -6.357302595461078e-08,
+    -1.0,
+    0.0
+  ],
+  "engine_playback": "Not tested; Blender and binary GLB validation only",
+  "WillowStump": {
+    "triangles": 44,
+    "clips_seconds": {},
+    "loop_endpoint_error": 0,
+    "unit_scales": true,
+    "finite_vertices": true,
+    "normalized_normals": true,
+    "textures": false,
+    "radius_m": 0.32,
+    "height_m": 0.3
+  },
+  "OakStump": {
+    "triangles": 44,
+    "clips_seconds": {},
+    "loop_endpoint_error": 0,
+    "unit_scales": true,
+    "finite_vertices": true,
+    "normalized_normals": true,
+    "textures": false,
+    "radius_m": 0.28,
+    "height_m": 0.32
+  },
+  "PineStump": {
+    "triangles": 44,
+    "clips_seconds": {},
+    "loop_endpoint_error": 0,
+    "unit_scales": true,
+    "finite_vertices": true,
+    "normalized_normals": true,
+    "textures": false,
+    "radius_m": 0.23,
+    "height_m": 0.28
+  },
+  "MabbFellingAxe": {
+    "triangles": 88,
+    "clips_seconds": {},
+    "loop_endpoint_error": 0,
+    "unit_scales": true,
+    "finite_vertices": true,
+    "normalized_normals": true,
+    "textures": false
+  },
+  "adventurer_Head_nodes": [
+    {
+      "name": "Head",
+      "translation": [
+        0,
+        0.1499999761581421,
+        0
+      ]
+    }
+  ],
+  "adventurer_woodcutting_Head_nodes": [
+    {
+      "name": "Head",
+      "translation": [
+        0,
+        0.1499999761581421,
+        0
+      ]
+    }
+  ]
+}
