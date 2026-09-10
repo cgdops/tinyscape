@@ -63,6 +63,40 @@ Regenerate only these outputs (overwrites any manual edits to them):
 
 ## Pending work / owner handoff
 
+### Bag log icon — UI shell R5 / A1–A3
+
+`CutLog.glb` now includes `IconAnchor`, a camera transform in item-local space.
+Copy its global transform to the icon camera: **-Z looks toward the log, +Y is
+camera up**, with a **30-degree vertical perspective FOV**, square 128 px target.
+The node's position supplies camera distance as well as its orientation. The view
+shows the cut end and the log's length together and fills approximately 85% of the
+square's width. All current log types share this model; no species-specific art
+has been invented.
+
+`cut_log_icon.blend` is the isolated editable icon source, with the delivered GLB
+reimported, its anchor, and a preview camera and warm lighting. Original geometry,
+materials and the 60-triangle count are preserved. No mesh exaggeration was needed.
+`screenshots/woodcutting/cut-log-icon.png` is a visually inspected **preview only**;
+the bag must render the GLB at runtime, not load this PNG.
+
+Regenerate the pose, source and preview after running the base props generator:
+
+```powershell
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python-exit-code 1 --python tools/create_log_icon.py
+```
+
+Verification: original GLB binary buffers preserved, anchor transform checked
+after export/reimport, 60 triangles, transparent 128 px image, and unclipped
+silhouette occupying approximately 85% of the width. Results are in
+`log-icon-verification.json`. Blender preview inspected; engine bag not tested.
+
+Gameplay handoff: the current gameplay-branch `scripts/icon_generator.gd` copies
+the anchor transform and uses 30-degree FOV, which matches this asset. However,
+it reads the viewport image immediately after creating the viewport, without
+waiting for a rendered frame, then frees it. The gameplay owner must verify/fix
+that capture timing to satisfy R5; this asset change cannot establish that the
+in-game icon appears correctly.
+
 - **A2 stumps delivered:** `WillowStump.glb`, `OakStump.glb`, `PineStump.glb`;
   editable source `stumps.blend`. See `../villagers/README.md` and its verification
   report. The corrected main art bible now approves Walnut albedo `#573f2e` and
