@@ -1,9 +1,10 @@
-﻿extends Node3D
+extends Node3D
 
 signal movement_changed(walking: bool)
 signal woodcut_progress(logs: int, xp: int, level: int, message: String)
 
 const Movement = preload("res://scripts/movement.gd")
+const WoodcuttingData = preload("res://scripts/woodcutting_data.gd")
 var motion: RefCounted
 var model: Node3D
 var animation_player: AnimationPlayer
@@ -14,14 +15,31 @@ var steps := 0
 var _world: Node3D
 var _was_moving := false
 
-# Woodcutting Skill & Chopping state
+# Woodcutting Skill, Inventory & Coins
 var woodcut_level: int = 1
 var woodcut_xp: int = 0
-var logs: int = 0
+var coins: int = 0
+var inventory: Array[Dictionary] = [] # Array of { "type": String, "name": String, "value": int }
+
+# Chopping state
 var chopping: bool = false
 var target_tree_tile: Vector2i = Vector2i(999, 999)
 var _chop_timer: float = 0.0
+var _chop_interval: float = 1.8
 var _axe_prop: Node3D
+
+# Compatibility getter for tests / external access
+var logs: int:
+	get:
+		return inventory.size()
+	set(val):
+		# If code tries to set logs directly (e.g. tests), adjust inventory items
+		var current = inventory.size()
+		if val > current:
+			for i in range(val - current):
+				add_item("oak", "Oak Log", 6)
+		elif val < current:
+			inventory = inventory.slice(0, val)
 
 func initialize(world: Node3D, start: Vector2i) -> void:
 	_world = world
@@ -71,18 +89,60 @@ func initialize(world: Node3D, start: Vector2i) -> void:
 	add_child(ring)
 	model.rotation.y = 0.5
 
-func start_chopping(tree_tile: Vector2i) -> void:
+func is_inventory_full() -> bool:
+	return inventory.size() >= WoodcuttingData.MAX_INVENTORY_SLOTS
+
+func add_item(item_type: String, item_name: String, value: int) -> bool:
+	if is_inventory_full():
+		return false
+	inventory.append({
+		"type": item_type,
+		"name": item_name,
+		"value": value
+	})
+	return true
+
+func can_chop(tree_tile: Vector2i) -> Dictionary:
+	var res = {"allowed": false, "reason": ""}
+	if not _world.is_tree_at(tree_tile):
+		res.reason = "There is no tree there to chop."
+		return res
+	if is_inventory_full():
+		res.reason = "Your rucksack is full."
+		return res
+	var tree_data = _world.get_tree_data(tree_tile)
+	var type_name = tree_data.get("type", "oak")
+	var info = WoodcuttingData.get_tree_info(type_name)
+	if woodcut_level < info["level_req"]:
+		res.reason = "You need Woodcutting level %d to cut %s." % [info["level_req"], info["name"].to_lower()]
+		return res
+	res.allowed = true
+	return res
+
+func start_chopping(tree_tile: Vector2i) -> bool:
+	var check = can_chop(tree_tile)
+	if not check.allowed:
+		woodcut_progress.emit(logs, woodcut_xp, woodcut_level, check.reason)
+		return false
+
+	var tree_data = _world.get_tree_data(tree_tile)
+	var type_name = tree_data.get("type", "oak")
+	var info = WoodcuttingData.get_tree_info(type_name)
+	_chop_interval = info["chop_interval"]
+	_chop_timer = _chop_interval
+
 	target_tree_tile = tree_tile
 	chopping = true
-	_chop_timer = 1.8
 	if _axe_prop:
 		_axe_prop.visible = true
+
 	# Face the tree
 	var delta_tile = Vector2(target_tree_tile - motion.current_tile)
 	if delta_tile.length_squared() > 0:
 		model.rotation.y = atan2(delta_tile.x, delta_tile.y)
 	if animation_player and not woodcut_clip.is_empty():
 		animation_player.play(woodcut_clip, 0.15)
+	return true
 
 func stop_chopping() -> void:
 	chopping = false
@@ -131,29 +191,47 @@ func _physics_process(delta: float) -> void:
 			woodcut_progress.emit(logs, woodcut_xp, woodcut_level, "The tree has been cut down.")
 			return
 
+		if is_inventory_full():
+			stop_chopping()
+			woodcut_progress.emit(logs, woodcut_xp, woodcut_level, "Your rucksack is full.")
+			return
+
 		_chop_timer -= delta
 		if _chop_timer <= 0.0:
-			_chop_timer = 1.8
+			_chop_timer = _chop_interval
 			_award_woodcut()
 
 func _award_woodcut() -> void:
-	logs += 1
-	var xp_gained = 25
-	woodcut_xp += xp_gained
-	var next_level = 1 + int(woodcut_xp / 100.0)
-	var leveled_up = next_level > woodcut_level
-	woodcut_level = next_level
+	if is_inventory_full():
+		stop_chopping()
+		woodcut_progress.emit(logs, woodcut_xp, woodcut_level, "Your rucksack is full.")
+		return
 
-	var msg = "You get some logs. (Woodcutting XP: +%d)" % xp_gained
+	var tree_data = _world.get_tree_data(target_tree_tile)
+	var type_name = tree_data.get("type", "oak")
+	var info = WoodcuttingData.get_tree_info(type_name)
+
+	# Add typed log to inventory
+	add_item(type_name, "%s Log" % info["name"], info["log_value"])
+
+	# Award XP and check level progression per table
+	var xp_gained: int = info["xp_per_log"]
+	woodcut_xp += xp_gained
+	var new_level = WoodcuttingData.get_level_for_xp(woodcut_xp)
+	var leveled_up = new_level > woodcut_level
+	woodcut_level = new_level
+
+	var msg = "You get some %s logs. (Woodcutting XP: +%d)" % [info["name"].to_lower(), xp_gained]
 	if leveled_up:
 		msg = "Congratulations! Your Woodcutting level is now %d!" % woodcut_level
 
-	# Felling check (chance to turn tree into a stump)
-	var felled = false
-	if logs % 3 == 0:
-		felled = _world.chop_tree(target_tree_tile)
-		if felled:
-			msg += " You chopped down the tree!"
-			stop_chopping()
+	# Tree hitpoint reduction and felling check
+	var felled = _world.damage_tree(target_tree_tile)
+	if felled:
+		msg += " You chopped down the tree!"
+		stop_chopping()
+	elif is_inventory_full():
+		stop_chopping()
+		msg += " Your rucksack is full."
 
 	woodcut_progress.emit(logs, woodcut_xp, woodcut_level, msg)

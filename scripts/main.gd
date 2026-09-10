@@ -168,6 +168,23 @@ func _unhandled_input(event: InputEvent) -> void:
 func _handle_right_click(screen_pos: Vector2, tile: Vector2i) -> void:
 	if not world.REGION.has_point(tile):
 		return
+	if tile == world.LOGPILE_TILE:
+		var options: Array[Dictionary] = [
+			{
+				"text": "Deposit logs",
+				"callback": func(): _deposit_logs_action()
+			},
+			{
+				"text": "Examine",
+				"callback": func(): hud.show_message("Lumber clearing log pile. Mabb stacks timber here.", 3.0)
+			},
+			{
+				"text": "Cancel",
+				"callback": func(): pass
+			}
+		]
+		hud.show_context_menu(screen_pos, options)
+		return
 	if world.is_tree_at(tile):
 		var tree_info = world.get_tree_data(tile)
 		var type_name: String = str(tree_info.get("type", "Tree")).capitalize() + " Tree"
@@ -187,9 +204,35 @@ func _handle_right_click(screen_pos: Vector2, tile: Vector2i) -> void:
 		]
 		hud.show_context_menu(screen_pos, options)
 
+func _deposit_logs_action() -> void:
+	if player.inventory.is_empty():
+		hud.show_message("You have no logs to deposit.")
+		return
+	var total_coins: int = 0
+	var deposited_count: int = 0
+	var remaining_inv: Array[Dictionary] = []
+	for item in player.inventory:
+		if item.get("name", "").ends_with("Log"):
+			total_coins += int(item.get("value", 4))
+			deposited_count += 1
+		else:
+			remaining_inv.append(item)
+	if deposited_count == 0:
+		hud.show_message("You have no logs to deposit.")
+		return
+	player.inventory = remaining_inv
+	player.coins += total_coins
+	world.set_logpile_has_logs(true)
+	hud.show_message("Mabb counts your logs without looking up. 'They'll float Thursday.' (+%dc)" % total_coins, 4.0)
+
 func _start_woodcut_action(tree_tile: Vector2i) -> void:
 	if not world.is_tree_at(tree_tile):
 		hud.show_message("There is no tree there to chop.")
+		return
+
+	var check = player.can_chop(tree_tile)
+	if not check.allowed:
+		hud.show_message(check.reason)
 		return
 
 	# If already adjacent, immediately start chopping
