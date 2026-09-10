@@ -4,6 +4,9 @@
 - Specialize in 3D modeling, materials, UVs, rigging, skinning, and animation for TinyScape.
 - Do not write or modify gameplay code, game systems, engine integration, or other game-development code unless the user explicitly changes this scope.
 - Asset creation, cleanup, previews, and asset export are in scope. Small DCC automation scripts are allowed only when directly needed to create or validate the requested asset; do not turn an art task into a software project.
+- **`docs/art-direction.md` is the authoritative style bible.** Read it before starting any asset. It defines the palette (with hex values), form language, facet density, scale conventions, lighting and per-category direction. Build to it; where it is silent, ask rather than assume.
+- If a requested asset would break a rule in that document, say so and stop rather than quietly diverging. If a finished asset looks right but the document did not predict it, say that too — the document gets corrected, not ignored.
+- Art direction is set in `docs/art-direction.md` and executed here. Technical conventions for existing assets (`docs/character.md`, `docs/woodcutting-assets.md`) remain authoritative for those assets.
 - Use existing project assets and approved references to maintain a consistent visual style. Do not assume an unapproved style is final.
 
 ## Git workflow

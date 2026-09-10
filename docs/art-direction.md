@@ -1,61 +1,117 @@
 # TinyScape Art Direction
 
-**Status:** `approved` for everything marked so below. This is the single source of truth for what
-TinyScape looks like. Asset work should be built against this document; where it is silent, ask
-rather than assume, and the answer gets written back here.
+**Status:** `approved`, and validated against the shipped look — the user approved the current
+Willowmere render as the reference. Where this document previously followed the original design
+spec, it now follows the build. This is the single source of truth for what TinyScape looks like.
 
 Ownership: art direction is set in this document (see [CLAUDE.md](../CLAUDE.md)) and executed by
 the 3D asset specialist (see [AGENTS.md](../AGENTS.md)). Technical conventions for existing assets
 live in [character.md](character.md) and [woodcutting-assets.md](woodcutting-assets.md) and are
 authoritative for those assets — this document does not override them.
 
+**Reference image:** [screenshots/willowmere.png](../screenshots/willowmere.png). All values below
+were sampled from it. When a new asset is questioned, compare against that frame.
+
 ---
 
 ## 1. The look in one line
 
-**A hand-made diorama you could pick up.** Faceted, chunky, warm, and readable at a glance —
-built objects rather than rendered ones.
+**A sunlit tabletop diorama.** A floating slab of countryside, lit high-key and warm, built from
+broad flat facets — closer to a model village under a lamp than to a rendered landscape.
 
-## 2. Palette — `approved`
+## 2. Palette — `approved`, sampled from the build
 
-From the design spec. These are the whole palette; new colours get added here with a name and a
-purpose rather than invented per-asset.
+The original spec palette was darker and cooler than what was actually built. These are the real
+values.
+
+### Ground and vegetation
 
 | Name | Hex | Used for |
 | --- | --- | --- |
-| Moss | `#71844b` | Ground cover, grass, the dominant green |
-| Deep pine | `#283e34` | Foliage masses, shadowed vegetation, UI panels |
-| Pond blue | `#579b9f` | Water, calm and slightly desaturated |
-| Warm stone | `#c2b698` | Paths, walls, the well, worked stone |
-| Walnut | `#573f2e` | Timber, trunks, structural wood |
-| Brass | `#d4b16d` | Metal fittings, UI edging, small bright accents |
+| Meadow | `#adc56f` | The dominant grass green — light, yellow-leaning |
+| Meadow shade | `#9fb266` | Adjacent tiles, subtle checker variation |
+| Canopy | `#849552` | Deciduous foliage mid-tone |
+| Canopy shadow | `#4c583a` | Underside foliage, shadowed masses |
+| Deep pine | `#283c31` | Conifers, the darkest value in the scene |
+| Pine mid | `#334537` | Lit conifer faces |
 
-Also in play from the character: teal tunic, saffron scarf, canvas, leather. From the axe: honey
-wood, dark steel. These are `approved` in place; if they become general-purpose, promote them into
-the table with names.
+### Ground surfaces
 
-**Rules.** Brass is an accent — small areas, high value, never a large surface. Water stays calm and
-low-contrast. Greens carry the world; keep them separated in value, not in hue, so foliage reads
-against grass.
+| Name | Hex | Used for |
+| --- | --- | --- |
+| Path butter | `#fae39a` | Footpaths — pale, warm, high-value |
+| Pale rock | `#c7cd9c` | Boulders, well stonework, slab edging |
+| Cream plaster | `#f8f7ca` | Cottage walls, awning stripe |
+
+### Wood, water, accent
+
+| Name | Hex | Used for |
+| --- | --- | --- |
+| Walnut | `#976a4d` | Trunks, fences, bridge, timber framing |
+| Walnut dark | `#89543c` | Shadowed timber, structural beams |
+| Pond teal | `#79d0b2` | Water — green-leaning, bright, calm |
+| **Terracotta** | `#ca7854` | Roofs. **The scene's single saturated warm accent.** |
+| Terracotta shade | `#b46e52` | Roof planes turned from the key light |
+| Brass | `#d4b16d` | UI edging, lamp fittings, small metal |
+
+### The environment ground
+
+| Name | Hex | Used for |
+| --- | --- | --- |
+| Sage void | `#a7bdaa` | The background behind the diorama. Not a sky — a flat colour |
+
+### Palette rules
+
+1. **Terracotta is the focal point, and it is rationed.** The cottage roof is the only large
+   saturated warm mass in a field of greens, which is precisely why the eye goes to it. **One
+   saturated warm accent per scene area.** A second red roof nearby would flatten the composition.
+2. **Greens separate by value, not hue.** Meadow `#adc56f` against deep pine `#283c31` is a wide
+   value gap; that gap is what makes the tree line read. Never place two greens of similar value
+   against each other.
+3. **The high end carries the light.** Path butter and cream plaster are near-white. They are what
+   makes the scene read as sunlit — do not darken them toward "realistic" stone.
+4. **Water is green-leaning teal, not blue.** It sits between the meadow and the sage void, so it
+   never fights the roof for attention.
+5. **New colours get added to these tables with a name and a purpose.** Never invent a colour
+   per-asset.
 
 ## 3. Form language — `approved`
 
 - **Flat-shaded facets, no textures.** Every material is a flat colour. No image textures, no
-  normal maps, no external asset licences to manage. This is a hard constraint, not a preference.
-- **Chunky Low Poly** is the approved direction, established with the wood-cutting axe: broad flat
-  facets, generous chamfers, a light bevel where a cutting or worn edge needs to read.
-- **Readable silhouette first.** Every object must be identifiable in outline at typical game camera
-  distance. Detail that doesn't survive that test is wasted.
-- **Individually placed, not scattered.** Vegetation and props are placed deliberately. The village
-  is composed like a diorama.
+  normal maps, no external asset licences. A hard constraint, not a preference.
+- **Chunky Low Poly.** Broad flat facets, generous chamfers, a light bevel where a cutting or worn
+  edge needs to read. Established by the wood-cutting axe (160 triangles, four materials) — the
+  reference for a small hand prop.
+- **Two silhouette archetypes carry the vegetation:** rounded multi-lobe deciduous canopies and
+  sharp conical pines. The contrast between blob and cone is doing the readability work. Keep new
+  vegetation clearly on one side of that line or deliberately introduce a distinct third shape.
+- **Readable silhouette first.** Identifiable in outline at game camera distance, or the detail is
+  wasted.
+- **Detail is placed, not scattered.** Individual flower clusters, grass tufts, lily pads and
+  boulders are positioned deliberately. Density is low and uneven — clumps with clear space between
+  them, never uniform ground cover.
 
-**Poly budget.** The axe is 160 triangles with four materials, and is the reference for a small
-hand prop. Larger props and architecture scale up proportionally, but the test is always the
-silhouette, not the count.
+## 4. Composition — `approved`
 
-## 4. Scale and engine conventions — `approved`
+- **The world is a floating slab.** The terrain is a finite diorama with visible stone edging,
+  sitting on flat sage void. There is no horizon and no skybox. New areas extend the slab; they do
+  not open into distance.
+- **The perimeter is fenced.** A timber post-and-rail fence rings the playable area — an in-world
+  boundary rather than an invisible wall.
+- **Ground reads as tiles.** Subtle value variation between adjacent grass and path tiles makes the
+  grid legible without drawing it. Keep that variation small: it should be felt, not counted.
+- **Paths structure the space.** Wide butter-coloured paths cross the village and lead the eye to
+  the cottage.
+- **The village is the subject.** UI is discreet chrome at the edges; the diorama fills the frame.
 
-Set by the existing assets; do not deviate without flagging the cost.
+## 5. Lighting — `approved`
+
+High-key, single warm directional key from the upper left. **Soft, long, low-contrast shadows** —
+present enough to seat every object on the ground, never dark enough to hide colour. No ambient
+occlusion crunch, no harsh terminators, no cinematic grading. The mood is a bright, still
+afternoon.
+
+## 6. Scale and engine conventions — `approved`
 
 - Godot **+Y up, +Z forward**; Blender +Z up, -Y forward, converted on export.
 - The adventurer stands **~1.94 m** with soles at the origin. All props are sized against them.
@@ -63,37 +119,34 @@ Set by the existing assets; do not deviate without flagging the cost.
 - Held items attach via a named socket on the hand bone (`Hand.R` → `AxeSocket.R` → `AxeMount.R`);
   keep the mount's transform, it carries the axis conversion.
 
-## 5. Lighting and camera — `approved`
+## 7. UI — `approved`
 
-Soft directional shadows, a single clear key direction, calm water. The 3D diorama fills the
-screen: the village is the focal point, not the UI. Nothing should read as harsh, high-contrast or
-cinematic — the mood is a well-lit afternoon.
+Dark timber-green panels (`#415247`) with fine brass edging and warm off-white text. Large serif for
+place names and the wordmark; quiet sans-serif for controls. Panels sit in the corners; the centre
+of the screen stays clear.
 
-## 6. UI — `approved`
-
-Dark timber-green panels with fine brass edges. Large serif for the village title; quiet
-sans-serif for controls. UI is discreet chrome around a diorama, never a dashboard.
-
-## 7. How the world's fiction shapes the art
+## 8. How the world's fiction shapes the art — `draft`
 
 From the [world bible](world/lore/world-bible.md). The setting is a working frontier, and the art
 should agree:
 
 - **Things are used.** Willowmere's pond is a log holding pond, the footbridge is a working log
-  crossing, the well is the oldest thing in the village. Props should look worked, not decorative.
+  crossing, the well is the oldest thing in the village. Props look worked, not decorative.
 - **Two registers.** Guild and charter objects are new, standardised, slightly officious — clean
-  edges, stamped brass, matched sets. Village and Custom objects are older, hand-made and
-  mismatched. Both belong; the contrast is the setting.
-- **The Custom is underplayed.** Offerings at stumps and the well are small, ordinary objects
-  placed with care. Never glowing, never runic, never obviously magical.
-- **The Longwood is older.** As assets move away from the coast, forms get larger, darker in value
-  and less regular. This is the difficulty dial made visible.
+  edges, stamped brass, matched sets. Village and Custom objects are older, hand-made, mismatched.
+  The contrast is the setting.
+- **The Custom is underplayed.** Offerings at stumps and the well are small ordinary objects placed
+  with care. Never glowing, never runic, never obviously magical.
+- **The Longwood is older.** Moving away from the coast, forms get larger, darker in value and less
+  regular — the difficulty dial made visible. This is where deep pine and canopy shadow dominate
+  and terracotta disappears entirely.
 
-Status: `draft` — this section follows from approved lore but no assets have been built to it yet.
+No assets have been built to this section yet.
 
-## 8. Open
+## 9. Open
 
-- No direction set yet for: architecture beyond the existing cottage, NPC visual variation, terrain
-  and foliage variety, item icons, or anything in the Longwood.
-- Nothing here has been re-validated against a fresh render since the axe. When the next asset
-  lands, check it against §2–§6 and update whatever this document failed to predict.
+- **Character scale in frame.** The adventurer reads small and generic at default camera distance
+  compared to the props around them. Worth deciding whether the character gets chunkier proportions
+  or the default camera comes in closer — a design question, not an asset bug.
+- No direction set yet for: architecture beyond the cottage, NPC visual variation, terrain and
+  foliage variety beyond the two tree archetypes, item icons, or anything in the Longwood.
