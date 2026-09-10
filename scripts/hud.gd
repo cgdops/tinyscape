@@ -7,6 +7,7 @@ signal pause_changed(paused: bool)
 signal destination_requested(tile: Vector2i)
 
 const Minimap = preload("res://scripts/minimap.gd")
+const WoodcuttingData = preload("res://scripts/woodcutting_data.gd")
 const INK := Color("25382f")
 const GOLD := Color("dbc28b")
 const TEXT := Color("eee8d9")
@@ -311,7 +312,17 @@ func update_state(player: Node3D) -> void:
 
 	tile_label.text = "Tile  %d, %d" % [player.motion.current_tile.x, player.motion.current_tile.y]
 	if "woodcut_level" in player:
-		woodcut_label.text = "Woodcutting: Lv %d (%d XP) | Logs: %d" % [player.woodcut_level, player.woodcut_xp, player.logs]
+		var next_xp: int = WoodcuttingData.get_next_level_xp(player.woodcut_level)
+		var max_slots: int = WoodcuttingData.MAX_INVENTORY_SLOTS
+		var coins_count: int = player.get("coins") if "coins" in player else 0
+		woodcut_label.text = "Woodcutting: Lv %d (%d/%d XP) | Logs %d/%d | %dc" % [
+			player.woodcut_level,
+			player.woodcut_xp,
+			next_xp,
+			player.logs,
+			max_slots,
+			coins_count
+		]
 	travel_label.text = "%d tiles explored" % player.steps if player.steps else "Your journey starts here"
 	if _message_time <= 0.0:
 		if player.get("chopping"):
