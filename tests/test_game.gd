@@ -1,4 +1,4 @@
-extends SceneTree
+﻿extends SceneTree
 
 var checks := 0
 var failures := 0
@@ -102,10 +102,11 @@ func run() -> void:
 	check(game.camera.zoom < old_zoom, "Scroll must zoom camera")
 	key(KEY_HOME)
 	check(game.camera.zoom == 24.0, "Home must reset camera")
+	var yaw_before_v: float = game.camera.yaw
 	key(KEY_V)
-	check(game.camera.inspecting and game.camera.zoom == 7.5, "V must open a close character view")
+	check(game.camera.zoom == 4.0 and is_equal_approx(game.camera.yaw, yaw_before_v), "V must set close preset zoom to 4.0 without altering yaw")
 	key(KEY_V)
-	check(not game.camera.inspecting and game.camera.zoom == 24.0, "V must restore the adventure view")
+	check(game.camera.zoom == 24.0, "V must restore the previous zoom")
 	mouse_button(MOUSE_BUTTON_RIGHT, screen_point)
 	var old_yaw: float = game.camera.yaw
 	var drag := InputEventMouseMotion.new()
