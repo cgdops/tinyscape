@@ -42,6 +42,26 @@ When a game design concept is proposed:
 4. **Clean Code & Test Coverage**:
    - Keep systems modular, well-documented, and covered with automated headless verification scripts.
 
+## Worktrees
+
+Each agent works in **its own git worktree** and never switches branches in another agent's
+checkout.
+
+| Agent | Worktree | Branch |
+| --- | --- | --- |
+| Director | `E:/GitHub/tinyscape-docs` | `main` |
+| 3D asset specialist | `E:/GitHub/tinyscape-3d-assets` | `codex/3d-assets` |
+| Gameplay engineer | `E:/GitHub/tinyscape` | `gemini/gameplay-engineering` |
+
+All three share one repository and one object store, so commits, branches and fetches are visible to
+everyone immediately — but each has its own working tree and its own `HEAD`.
+
+Work only in your own worktree, and stay on your own branch. A `git checkout` in a shared checkout
+pulls the branch out from under whoever else is working in it: their next commit lands on your
+branch, and untangling it means cherry-picking and resetting someone else's work. If you are about
+to switch branches, check which directory you are in first — needing to switch usually means you are
+in the wrong one.
+
 ## Branching and file ownership
 
 This is a multi-agent repository. Three agents work in parallel and each owns a distinct set of

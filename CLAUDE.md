@@ -72,11 +72,24 @@ either fit inside that footprint or be clearly labelled as future scope.
 
 This is a multi-agent repository. Three agents work in parallel:
 
-| Agent | Instructions | Branch | Owns |
-| --- | --- | --- | --- |
-| Director (this one) | `CLAUDE.md` | `narrative-art` | Story, quests, skills, art direction, marketing |
-| 3D asset specialist | `AGENTS.md` | `codex/3d-assets` | Models, rigs, animation, export |
-| Gameplay engineer | `GEMINI.md` | `gemini/gameplay-engineering` | Code, systems, engine integration |
+| Agent | Instructions | Worktree | Branch | Owns |
+| --- | --- | --- | --- | --- |
+| Director (this one) | `CLAUDE.md` | `E:/GitHub/tinyscape-docs` | `main` | Story, quests, skills, art direction, marketing |
+| 3D asset specialist | `AGENTS.md` | `E:/GitHub/tinyscape-3d-assets` | `codex/3d-assets` | Models, rigs, animation, export |
+| Gameplay engineer | `GEMINI.md` | `E:/GitHub/tinyscape` | `gemini/gameplay-engineering` | Code, systems, engine integration |
+
+**Each agent works in its own git worktree and never switches branches in another agent's
+checkout.** They share one repository and one object store, so commits, branches and fetches are
+visible to everyone immediately — but each has its own working tree and its own `HEAD`.
+
+This is not a nicety. Three agents sharing one checkout means a `git checkout` from one yanks the
+branch out from under another mid-operation: work gets committed to the wrong branch, and the fix
+involves cherry-picking and resetting someone else's branch. It happened three times in one session
+before the director had a worktree of its own.
+
+The director's worktree sits permanently on `main`, which is also where it publishes, so the
+director should never need `git checkout` at all. If you find yourself about to switch branches in
+a shared checkout, stop: you are in the wrong directory.
 
 **`main` is the shared source of truth.** The director publishes approved design documentation
 directly to `main`; the other two agents read requirements from `main`, implement on their own
