@@ -1,0 +1,104 @@
+{
+  "requirements": [
+    "A1",
+    "A3",
+    "A4"
+  ],
+  "assets": {
+    "WillowTree": {
+      "triangles": 774,
+      "bounds_blender_xyz_m": [
+        [
+          -2.2319648265838623,
+          2.377558946609497
+        ],
+        [
+          -2.1464085578918457,
+          2.0627636909484863
+        ],
+        [
+          0.0,
+          3.6500000953674316
+        ]
+      ],
+      "mesh_components": 13,
+      "closed_components": true,
+      "outward_normals": true,
+      "finite_vertices": true,
+      "unit_scales": true,
+      "glb_triangles_verified": true
+    },
+    "CutLog": {
+      "triangles": 60,
+      "bounds_blender_xyz_m": [
+        [
+          -0.625,
+          0.625
+        ],
+        [
+          -0.17000000178813934,
+          0.17000000178813934
+        ],
+        [
+          -1.7881393032936899e-09,
+          0.3400000035762787
+        ]
+      ],
+      "mesh_components": 1,
+      "closed_components": true,
+      "outward_normals": true,
+      "finite_vertices": true,
+      "unit_scales": true,
+      "glb_triangles_verified": true
+    },
+    "LogPileEmpty": {
+      "triangles": 224,
+      "bounds_blender_xyz_m": [
+        [
+          -0.5896371006965637,
+          0.6074378490447998
+        ],
+        [
+          -0.9361540675163269,
+          0.9362621307373047
+        ],
+        [
+          -7.450580596923828e-09,
+          1.1029722690582275
+        ]
+      ],
+      "mesh_components": 8,
+      "closed_components": true,
+      "outward_normals": true,
+      "finite_vertices": true,
+      "unit_scales": true,
+      "glb_triangles_verified": true
+    },
+    "LogPileStacked": {
+      "triangles": 764,
+      "bounds_blender_xyz_m": [
+        [
+          -0.6650000214576721,
+          0.7100000381469727
+        ],
+        [
+          -0.9361540675163269,
+          0.9362621307373047
+        ],
+        [
+          -7.450580596923828e-09,
+          1.1679999828338623
+        ]
+      ],
+      "mesh_components": 17,
+      "closed_components": true,
+      "outward_normals": true,
+      "finite_vertices": true,
+      "unit_scales": true,
+      "glb_triangles_verified": true
+    }
+  },
+  "textures": false,
+  "uvs": "Unneeded for flat-colour materials",
+  "engine_validation": "Not performed; asset-only delivery"
+}
